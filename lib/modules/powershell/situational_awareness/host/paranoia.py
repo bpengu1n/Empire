@@ -1,6 +1,9 @@
+from __future__ import print_function
+from builtins import str
+from builtins import object
 from lib.common import helpers
 
-class Module:
+class Module(object):
 
     def __init__(self, mainMenu, params=[]):
 
@@ -35,22 +38,22 @@ class Module:
             #   value_name : {description, required, default_value}
             'Agent' : {
                 # The 'Agent' option is the only one that MUST be in a module
-                'Description'   :   'Agent to deploy Paranoia on.',
+                'Description'   :   r'Agent to deploy Paranoia on.',
                 'Required'      :   True,
                 'Value'         :   ''
             },
             'WatchProcesses' : {
-                'Description'   :   'Process names to watch out for. Default list is already appended.',
+                'Description'   :   r'Process names to watch out for. Default list is already appended.',
                 'Required'      :   False,
                 'Value'         :   ''
             },
             'WatchUsers' : {
-                'Description'   :   'Users to watch out for in the form of domain\user, domain\user2, localuser',
+                'Description'   :   r'Users to watch out for in the form of domain\user, domain\user2, localuser',
                 'Required'      :   False,
                 'Value'         :   ''
             },
             'WatchGroups' : {
-                'Description'   :   'AD Groups to watch out for (Default is \'Domain Admins\')',
+                'Description'   :   r'AD Groups to watch out for (Default is \'Domain Admins\')',
                 'Required'      :   False,
                 'Value'         :   ''
             }
@@ -83,7 +86,7 @@ class Module:
         try:
             f = open(moduleSource, 'r')
         except:
-            print helpers.color("[!] Could not read module source path at: " + str(moduleSource))
+            print(helpers.color("[!] Could not read module source path at: " + str(moduleSource)))
             return ""
 
         moduleCode = f.read()
@@ -94,7 +97,7 @@ class Module:
         scriptEnd = "Invoke-Paranoia "
 
         # add any arguments to the end execution of the script
-        for option,values in self.options.iteritems():
+        for option,values in self.options.items():
             if option.lower() != "agent":
                 if values['Value'] and values['Value'] != '':
                     if values['Value'].lower() == "true":

@@ -1,6 +1,9 @@
+from __future__ import print_function
+from builtins import str
+from builtins import object
 from lib.common import helpers
 
-class Module:
+class Module(object):
 
     def __init__(self, mainMenu, params=[]):
 
@@ -14,13 +17,13 @@ class Module:
                             'can be provided. UDP scanning of management servers is optional.'),
             'Background' : True,
             'OutputExtension' : None,
-			
+            
             'NeedsAdmin' : False,
             'OpsecSafe' : True,
             'Language' : 'powershell',
-			'MinPSVersion' : '2',
+            'MinPSVersion' : '2',
             'MinLanguageVersion' : '2',
-			
+            
             'Comments': [
                 'https://github.com/NetSPI/PowerUpSQL/blob/master/PowerUpSQL.ps1'
             ]
@@ -99,7 +102,7 @@ class Module:
             with open(moduleSource, 'r') as source:
                 script = source.read()
         except:
-            print helpers.color("[!] Could not read module source path at: " + str(moduleSource))
+            print(helpers.color("[!] Could not read module source path at: " + str(moduleSource)))
             return ""
 
         scriptEnd = " Get-SQLInstanceDomain"
@@ -114,7 +117,7 @@ class Module:
         if domainAccount != "":
             scriptEnd += " -DomainAccount "+domainAccount
         if checkMgmt.lower() != "false":
-	    scriptEnd += " -CheckMgmt"
+            scriptEnd += " -CheckMgmt"
             if udpTimeOut != "":
                 scriptEnd += " -UDPTimeOut "+udpTimeOut
         if obfuscate:

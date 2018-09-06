@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import range
 import sqlite3, argparse, sys, argparse, logging, json, string, subprocess
 import os, re, time, signal, copy, base64, pickle, random
 from flask import Flask, request, jsonify, make_response, abort, url_for, render_template
@@ -10,13 +15,13 @@ import hashlib
 from OpenSSL import SSL
 import ssl
 import ast
-
 # Empire imports
 from lib.common import empire, helpers, server
 
-# set global utf8 encoding
-reload(sys)
-sys.setdefaultencoding('utf8')
+# set global utf8 encoding in python2
+if sys.version[0] == '2':
+    reload(sys)
+    sys.setdefaultencoding('utf8')
 
 global serverExitCommand
 serverExitCommand = 'restart'
@@ -34,7 +39,7 @@ def database_check_docker():
     """
     if os.path.exists('/.dockerenv'):
         if not os.path.exists('data/empire.db'):
-            print '[*] Fresh start in docker, running reset.sh for you'
+            print('[*] Fresh start in docker, running reset.sh for you')
             subprocess.call(['./setup/reset.sh'])
 
 
@@ -51,8 +56,8 @@ def database_connect():
         return conn
 
     except Exception:
-        print helpers.color("[!] Could not connect to database")
-        print helpers.color("[!] Please run setup_database.py")
+        print(helpers.color("[!] Could not connect to database"))
+        print(helpers.color("[!] Please run setup_database.py"))
         sys.exit()
 
 
@@ -165,7 +170,7 @@ def start_collabloration_server(main):
     Start the collab/team server
     """
     if args == None:
-        print helpers.color("[!] Error starting team server")
+        print(helpers.color("[!] Error starting team server"))
         sys.exit()
 
     collab_server = server.Server(main)
@@ -207,15 +212,15 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
         password = password[0]
 
 
-    print ''
+    print('')
 
 
 
-    print " * Starting Empire RESTful API on port: %s" %(port)
+    print(" * Starting Empire RESTful API on port: %s" %(port))
 
     # refresh the token for the RESTful API
     apiToken = refresh_api_token(conn)
-    print " * RESTful API token: %s" %(apiToken)
+    print(" * RESTful API token: %s" %(apiToken))
 
     permanentApiToken = get_permanent_token(conn)
     tokenAllowed = re.compile("^[0-9a-z]{40}")
@@ -279,7 +284,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
         """
         List all of the current registered API routes.
         """
-        import urllib
+        import urllib.request, urllib.parse, urllib.error
         output = []
         for rule in app.url_map.iter_rules():
 
@@ -289,7 +294,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
 
             methods = ','.join(rule.methods)
             url = url_for(rule.endpoint, **options)
-            line = urllib.unquote("[ { '" + rule.endpoint + "': [ { 'methods': '" + methods + "', 'url': '" + url + "' } ] } ]")
+            line = urllib.parse.unquote("[ { '" + rule.endpoint + "': [ { 'methods': '" + methods + "', 'url': '" + url + "' } ] } ]")
             output.append(line)
 
         res = ''
@@ -318,7 +323,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
         """
 
         stagers = []
-        for stagerName, stager in main.stagers.stagers.iteritems():
+        for stagerName, stager in list(main.stagers.stagers.items()):
             info = copy.deepcopy(stager.info)
             info['options'] = stager.options
             info['Name'] = stagerName
@@ -336,7 +341,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
             return make_response(jsonify({'error': 'stager name %s not found, make sure to use [os]/[name] format, ie. windows/dll' %(stager_name)}), 404)
 
         stagers = []
-        for stagerName, stager in main.stagers.stagers.iteritems():
+        for stagerName, stager in list(main.stagers.stagers.items()):
             if stagerName == stager_name:
                 info = copy.deepcopy(stager.info)
                 info['options'] = stager.options
@@ -371,14 +376,14 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
         stager = main.stagers.stagers[stagerName]
 
         # set all passed options
-        for option, values in request.json.iteritems():
+        for option, values in list(request.json.items()):
             if option != 'StagerName':
                 if option not in stager.options:
                     return make_response(jsonify({'error': 'Invalid option %s, check capitalization.' %(option)}), 400)
                 stager.options[option]['Value'] = values
 
         # validate stager options
-        for option, values in stager.options.iteritems():
+        for option, values in list(stager.options.items()):
             if values['Required'] and ((not values['Value']) or (values['Value'] == '')):
                 return make_response(jsonify({'error': 'required stager options missing'}), 400)
 
@@ -401,7 +406,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
         """
 
         modules = []
-        for moduleName, module in main.modules.modules.iteritems():
+        for moduleName, module in list(main.modules.modules.items()):
             moduleInfo = copy.deepcopy(module.info)
             moduleInfo['options'] = module.options
             moduleInfo['Name'] = moduleName
@@ -444,7 +449,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
         module = main.modules.modules[module_name]
 
         # set all passed module options
-        for key, value in request.json.iteritems():
+        for key, value in list(request.json.items()):
             if key not in module.options:
                 return make_response(jsonify({'error': 'invalid module option'}), 400)
 
@@ -453,7 +458,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
         # validate module options
         sessionID = module.options['Agent']['Value']
 
-        for option, values in module.options.iteritems():
+        for option, values in list(module.options.items()):
             if values['Required'] and ((not values['Value']) or (values['Value'] == '')):
                 return make_response(jsonify({'error': 'required module option missing'}), 400)
 
@@ -556,7 +561,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
 
         modules = []
 
-        for moduleName, module in main.modules.modules.iteritems():
+        for moduleName, module in list(main.modules.modules.items()):
             if (searchTerm.lower() == '') or (searchTerm.lower() in moduleName.lower()) or (searchTerm.lower() in ("".join(module.info['Description'])).lower()) or (searchTerm.lower() in ("".join(module.info['Comments'])).lower()) or (searchTerm.lower() in ("".join(module.info['Author'])).lower()):
 
                 moduleInfo = copy.deepcopy(main.modules.modules[moduleName].info)
@@ -581,7 +586,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
 
         modules = []
 
-        for moduleName, module in main.modules.modules.iteritems():
+        for moduleName, module in list(main.modules.modules.items()):
             if (searchTerm.lower() == '') or (searchTerm.lower() in moduleName.lower()):
 
                 moduleInfo = copy.deepcopy(main.modules.modules[moduleName].info)
@@ -606,7 +611,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
 
         modules = []
 
-        for moduleName, module in main.modules.modules.iteritems():
+        for moduleName, module in list(main.modules.modules.items()):
             if (searchTerm.lower() == '') or (searchTerm.lower() in ("".join(module.info['Description'])).lower()):
 
                 moduleInfo = copy.deepcopy(main.modules.modules[moduleName].info)
@@ -631,7 +636,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
 
         modules = []
 
-        for moduleName, module in main.modules.modules.iteritems():
+        for moduleName, module in list(main.modules.modules.items()):
             if (searchTerm.lower() == '') or (searchTerm.lower() in ("".join(module.info['Comments'])).lower()):
 
                 moduleInfo = copy.deepcopy(main.modules.modules[moduleName].info)
@@ -656,7 +661,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
 
         modules = []
 
-        for moduleName, module in main.modules.modules.iteritems():
+        for moduleName, module in list(main.modules.modules.items()):
             if (searchTerm.lower() == '') or (searchTerm.lower() in ("".join(module.info['Author'])).lower()):
 
                 moduleInfo = copy.deepcopy(main.modules.modules[moduleName].info)
@@ -745,8 +750,8 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
 
         listenerObject = main.listeners.loadedListeners[listener_type]
         # set all passed options
-        for option, values in request.json.iteritems():
-            if type(values) == unicode:
+        for option, values in list(request.json.items()):
+            if type(values) == str:
                 values = values.encode('utf8')
             if option == "Name":
                 listenerName = values
@@ -1294,7 +1299,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
 
 
     if not os.path.exists('./data/empire-chain.pem'):
-        print "[!] Error: cannot find certificate ./data/empire-chain.pem"
+        print("[!] Error: cannot find certificate ./data/empire-chain.pem")
         sys.exit()
 
 
@@ -1309,13 +1314,13 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
             sys.stdout.close()
             sys.stdout = oldStdout
 
-        print "\n * Shutting down Empire RESTful API"
+        print("\n * Shutting down Empire RESTful API")
 
         if conn:
             conn.close()
 
         if suppress:
-            print " * Shutting down the Empire instance"
+            print(" * Shutting down the Empire instance")
             main.shutdown()
 
         serverExitCommand = 'shutdown'
@@ -1412,7 +1417,7 @@ if __name__ == '__main__':
         args.restport = args.restport[0]
 
     if args.version:
-        print empire.VERSION
+        print(empire.VERSION)
 
     elif args.rest:
          # start an Empire instance and RESTful API
@@ -1444,7 +1449,7 @@ if __name__ == '__main__':
             try:
                 start_collabloration_server(empireMenu)
             except Exception as e:
-                print "Error starting collaboration server: {}".format(str(e))
+                print("Error starting collaboration server: {}".format(str(e)))
         
         thread = helpers.KThread(target=thread_server, args=(main,))
         thread.daemon = True

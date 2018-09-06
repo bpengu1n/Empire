@@ -1,13 +1,15 @@
+from __future__ import absolute_import
+from builtins import object
 import sys
 import base64
 import sqlite3
 import datetime
 import threading
-import helpers
+from . import helpers
 import json
 from pydispatch import dispatcher
 
-class Users():
+class Users(object):
     # This is a demo class for handling users
     # usercache represents the db
     def __init__(self, mainMenu):
@@ -147,7 +149,7 @@ class Users():
         """
         Obtain the corresponding sid, given a username
         """
-        for key, values in self.users.iteritems():
+        for key, values in self.users.items():
             if values['username'] == username:
                 return key
 

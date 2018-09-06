@@ -1,6 +1,9 @@
+from __future__ import print_function
+from builtins import str
+from builtins import object
 from lib.common import helpers
 
-class Module:
+class Module(object):
 
     def __init__(self, mainMenu, params=[]):
 
@@ -43,7 +46,7 @@ class Module:
                 'Value'         :   ''
             },
             'user' : {
-                'Description'   :   'Username to extract the hash for (domain\username format).',
+                'Description'   :   'Username to extract the hash for (domain\\username format).',
                 'Required'      :   True,
                 'Value'         :   ''
             },
@@ -80,7 +83,7 @@ class Module:
         try:
             f = open(moduleSource, 'r')
         except:
-            print helpers.color("[!] Could not read module source path at: " + str(moduleSource))
+            print(helpers.color("[!] Could not read module source path at: " + str(moduleSource)))
             return ""
 
         moduleCode = f.read()

@@ -3,15 +3,17 @@ add_file()                 - Add a new file to the database
 get_file()                 - Get the contents of a file/screenshot specified by ID and return the base64 encoded blob.
 get_files_by_type()        - Return all file downloads with ID, Path, file_type, and Timestamp
 """
+from __future__ import absolute_import
 
-import helpers 
+from builtins import object
+from . import helpers 
 import os 
-import events 
+from . import events 
 import base64
 import threading
 
 
-class fetcher():
+class fetcher(object):
     """
     Main class to handle file download and upload functionality for websocket clients
     """
