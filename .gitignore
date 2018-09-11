@@ -1,3 +1,4 @@
+*.bak
 data/empire.db
 data/empire-chain.pem
 data/empire-priv.key
