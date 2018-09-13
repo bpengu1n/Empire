@@ -13,7 +13,7 @@ _covGlob.start()
 coverage.CoverageData().write_file('.coverage')
 
 # Import all suites below
-from .core import CoreSuite
+from core import CoreSuite
 
 if __name__ == '__main__':
     suites = [
