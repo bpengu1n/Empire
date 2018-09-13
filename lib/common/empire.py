@@ -4894,49 +4894,52 @@ class StagerMenu(SubMenu):
         "Generate/execute the given Empire stager."
         if not self.validate_options():
             return
+        try:
+            stagerOutput = self.stager.generate()
+        except Exception as e:
+            import sys, traceback
+            (_, _, sys_tb) = sys.exc_info()
+            traceback.print_tb(sys_tb, file=sys.stdout)
+            print(helpers.color("[!] Error generating stager: {}".format(e)))
+        else:
+            savePath = ''
+            if 'OutFile' in self.stager.options:
+                savePath = self.stager.options['OutFile']['Value']
 
-        stagerOutput = self.stager.generate()
-
-        savePath = ''
-        if 'OutFile' in self.stager.options:
-            savePath = self.stager.options['OutFile']['Value']
-
-        if savePath != '':
-            # make the base directory if it doesn't exist
-            if not os.path.exists(os.path.dirname(
-                    savePath)) and os.path.dirname(savePath) != '':
-                os.makedirs(os.path.dirname(savePath))
-
-            # if we need to write binary output for a .dll
-            if ".dll" in savePath:
-                out_file = open(savePath, 'wb')
-                out_file.write(bytearray(stagerOutput))
-                out_file.close()
-            else:
-                # otherwise normal output
-                out_file = open(savePath, 'w')
+            if savePath != '':
+                # make the base directory if it doesn't exist
+                if not os.path.exists(os.path.dirname(
+                        savePath)) and os.path.dirname(savePath) != '':
+                    os.makedirs(os.path.dirname(savePath))
+                
+                if isinstance(stagerOutput, (bytes, bytearray)):
+                    out_file = open(savePath, 'wb')
+                else:
+                    out_file = open(savePath, 'w')
+                
                 out_file.write(stagerOutput)
                 out_file.close()
 
-            # if this is a bash script, make it executable
-            if ".sh" in savePath:
-                os.chmod(savePath, 777)
 
-            print(
-                "\n" +
-                helpers.color(
-                    "[*] Stager output written out to: %s\n" %
-                    (savePath)))
-            # dispatch this event
-            message = "[*] Generated stager"
-            signal = json.dumps({
-                'print': False,
-                'message': message,
-                'options': self.stager.options
-            })
-            dispatcher.send(signal, sender="empire")
-        else:
-            print(stagerOutput)
+                # if this is a bash script, make it executable
+                if ".sh" in savePath:
+                    os.chmod(savePath, 777)
+
+                print(
+                    "\n" +
+                    helpers.color(
+                        "[*] Stager output written out to: %s\n" %
+                        (savePath)))
+                # dispatch this event
+                message = "[*] Generated stager"
+                signal = json.dumps({
+                    'print': False,
+                    'message': message,
+                    'options': self.stager.options
+                })
+                dispatcher.send(signal, sender="empire")
+            else:
+                print(stagerOutput)
 
     def do_execute(self, line):
         "Generate/execute the given Empire stager."

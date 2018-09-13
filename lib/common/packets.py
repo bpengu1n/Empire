@@ -61,6 +61,7 @@ HMACc = first 10 bytes of a SHA256 HMAC using the client's session key
 from __future__ import absolute_import
 
 from builtins import str
+from builtins import bytes
 import struct
 import base64
 import os
@@ -277,10 +278,15 @@ def parse_routing_packet(stagingKey, data):
                 if len(data) - offset < 20:
                     break
 
+                
+
                 RC4IV = data[0+offset:4+offset]
                 RC4data = data[4+offset:20+offset]
-                routingPacket = encryption.rc4(RC4IV+stagingKey, RC4data)
+                encKey = RC4IV + bytes(stagingKey, 'utf8')
+                routingPacket = bytearray(encryption.rc4(encKey, RC4data), 'utf8')
                 sessionID = routingPacket[0:8]
+
+                print("\nPACKET({}: {})\n".format(len(routingPacket), routingPacket[8:]))
 
                 # B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
                 (language, meta, additional, length) = struct.unpack("=BBHL", routingPacket[8:])
@@ -350,15 +356,15 @@ def build_routing_packet(stagingKey, sessionID, language, meta="NONE", additiona
 
     # binary pack all of the passed config values as unsigned numbers
     #   B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
-    data = sessionID + struct.pack("=BBHL", LANGUAGE.get(language.upper(), 0), META.get(meta.upper(), 0), ADDITIONAL.get(additional.upper(), 0), len(encData))
+    data = sessionID + struct.pack("=BBHL", LANGUAGE.get(language.upper(), 0), META.get(meta.upper(), 0), ADDITIONAL.get(additional.upper(), 0), len(encData)).decode('utf8')
 
     RC4IV = os.urandom(4)
-    stagingKey = str(stagingKey)
-    key = RC4IV + stagingKey
+    key = RC4IV + bytes(stagingKey, 'utf8')
+    print("\nPRE_DATA({}: {})\n".format(len(data), data))
     rc4EncData = encryption.rc4(key, data)
 
     # return an rc4 encyption of the routing packet, append an HMAC of the packet, then the actual encrypted data
-    packet = RC4IV + rc4EncData + encData
+    packet = RC4IV + bytes(rc4EncData, 'utf8') + bytes(encData, 'utf8')
 
     return packet
 

@@ -46,7 +46,7 @@ class Modules(object):
         pattern = '*.py'
         print(helpers.color("[*] Loading modules from: %s" % (rootPath)))
          
-        for root, dirs, files in os.walk(rootPath):
+        for root, _, files in os.walk(rootPath):
             for filename in fnmatch.filter(files, pattern):
                 filePath = os.path.join(root, filename)
 
@@ -72,7 +72,7 @@ class Modules(object):
         rootPath = "%s/lib/modules/" % (self.mainMenu.installPath)
         pattern = '*.py'
          
-        for root, dirs, files in os.walk(rootPath):
+        for root, _, files in os.walk(rootPath):
             for filename in fnmatch.filter(files, pattern):
                 filePath = os.path.join(root, filename)
 

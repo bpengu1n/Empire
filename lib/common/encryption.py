@@ -29,9 +29,9 @@ import base64
 import hashlib
 import hmac
 import os
+import sys
 import string
 import M2Crypto
-import os
 import random
 
 from xml.dom.minidom import parseString
@@ -195,18 +195,25 @@ def generate_aes_key():
     return ''.join(random.sample(string.ascii_letters + string.digits + '!#$%&()*+,-./:;<=>?@[\]^_`{|}~', 32))
 
 
-def rc4(key, data):
+def rc4(key, data):     # type (bytes, str) -> str
     """
     RC4 encrypt/decrypt the given data input with the specified key.
 
     From: http://stackoverflow.com/questions/29607753/how-to-decrypt-a-file-that-encrypted-with-rc4-using-python
+    Py3 compatibility, modified from: https://gist.github.com/t3ntman/201e439bc7818a25af236cac6b3eacc6
     """
+
+    if isinstance(data, bytes):
+        data = data.decode('utf8')
 
     S, j, out = list(range(256)), 0, []
 
     # KSA Phase
     for i in range(256):
-        j = (j + S[i] + ord(key[i % len(key)])) % 256
+        if sys.version_info.major == 2:
+            j = (j + S[i] + ord(key[i % len(key)] )) % 256
+        else:
+            j = (j + S[i] + key[i % len(key)] ) % 256
         S[i], S[j] = S[j], S[i]
 
     # PRGA Phase
@@ -215,7 +222,11 @@ def rc4(key, data):
         i = (i + 1) % 256
         j = (j + S[i]) % 256
         S[i], S[j] = S[j], S[i]
-        out.append(chr(ord(char) ^ S[(S[i] + S[j]) % 256]))
+
+        if sys.version_info.major == 2:
+            out.append(unichr(ord(char) ^ S[(S[i] + S[j]) % 256]))
+        else:
+            out.append(chr(ord(char) ^ S[(S[i] + S[j]) % 256]))
 
     return ''.join(out)
 

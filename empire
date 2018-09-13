@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import print_function
 from future import standard_library
@@ -473,7 +473,7 @@ def start_restful_api(empireMenu, suppress=False, username=None, password=None, 
                 agentVersion = float(main.agents.get_language_version_db(sessionID))
                 # check if the agent/module PowerShell versions are compatible
                 if moduleVersion > agentVersion:
-                    return make_response(jsonify({'error': "module requires PS version "+str(modulePSVersion)+" but agent running PS version "+str(agentPSVersion)}), 400)
+                    return make_response(jsonify({'error': "module requires PS version "+str(moduleVersion)+" but agent running PS version "+str(agentVersion)}), 400)
 
         except Exception as e:
             return make_response(jsonify({'error': 'exception: %s' %(e)}), 400)
