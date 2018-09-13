@@ -16,3 +16,5 @@ setup/xar/
 setup/bomutils/
 .venv
 .DS_Store
+.mypy_cache
+tests/.coverage.*
