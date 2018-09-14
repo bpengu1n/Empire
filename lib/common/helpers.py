@@ -1066,6 +1066,58 @@ class KThread(threading.Thread):
     def kill(self):
         self.killed = True
 
+"""Python2/3 compatible bytestring representation"""
+""" Adapted from http://python3porting.com/problems.html """
+if sys.version_info < (3,):
+    class _B(str):
+        """Python2 'bytestring' class
+        Exists for 2/3 simultaneous compatibility."""
+        def __new__(cls, value):
+            if isinstance(value[0], int):
+                # It's a list of integers
+                value = ''.join([chr(x) for x in value])
+            return super(_B, cls).__new__(cls, value)
+
+        def itemint(self, index):
+            return ord(self[index])
+
+        def iterint(self):
+            for x in self:
+                yield ord(x)
+else:
+    class _B(bytes):
+        """Python3 'bytestring' class
+        Most of the legwork happens in this class, where we seek to specify 
+        'bytestrings' and retain their representation, but still make them 
+        interoperable with identical unicode strings"""
+        def __new__(cls, value):
+            if isinstance(value, str):
+                # It's a unicode string:
+                value = value.encode('ISO-8859-1')
+            return super(_B, cls).__new__(cls, value)
+
+        def itemint(self, x):
+            return self[x]
+
+        def iterint(self):
+            for x in self:
+                yield x
+
+        def __getitem__(self, k):
+            return self.decode('utf-8', errors='replace')[k]
+
+        def __eq__(self, other):
+            if isinstance(other, str):
+                return self == _B(other)
+            else:
+                return super().__eq__(other)
+
+        def __ne__(self, other):
+            return not self.__eq__(other)
+
+        def startswith(self, s): return super().startswith(_B(s))
+        def endswith(self, s):   return super().startswith(_B(s))
+
 
 def slackMessage(slackToken, slackChannel, slackText):
     url = "https://slack.com/api/chat.postMessage"
