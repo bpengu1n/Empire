@@ -29,7 +29,7 @@ class TestCorePacketsModel(EmpireTestCase):
     def test_routing_packet(self):
         ' def build_routing_packet(stagingKey, sessionID, language, meta="NONE", additional="NONE", encData=''):'
         ' parse_routing_packet(stagingKey, data):'
-        _key = os.urandom(16).decode('utf8', errors='ignore')
+        _key = os.urandom(12)
         _sessID = "00000000"
         _lang = "python"
 

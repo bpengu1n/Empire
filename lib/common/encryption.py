@@ -195,40 +195,47 @@ def generate_aes_key():
     return ''.join(random.sample(string.ascii_letters + string.digits + '!#$%&()*+,-./:;<=>?@[\]^_`{|}~', 32))
 
 
-def rc4(key, data):     # type (bytes, str) -> str
+def rc4(key: bytes, data: str) -> str:
     """
+    DEPRECATED - ciphertext generated is utf-8 encoded, deferring to official ARC4 from Python cryptography
     RC4 encrypt/decrypt the given data input with the specified key.
 
     From: http://stackoverflow.com/questions/29607753/how-to-decrypt-a-file-that-encrypted-with-rc4-using-python
-    Py3 compatibility, modified from: https://gist.github.com/t3ntman/201e439bc7818a25af236cac6b3eacc6
+    Py3 compatibility: https://gist.github.com/t3ntman/201e439bc7818a25af236cac6b3eacc6
+    Modified to normalize input
     """
-
-    if isinstance(data, bytes):
-        data = data.decode('utf8')
-
-    S, j, out = list(range(256)), 0, []
-
-    # KSA Phase
+    """RC4 algorithm"""
+    x = 0
+    box = list(range(256))
     for i in range(256):
-        if sys.version_info.major == 2:
-            j = (j + S[i] + ord(key[i % len(key)] )) % 256
-        else:
-            j = (j + S[i] + key[i % len(key)] ) % 256
-        S[i], S[j] = S[j], S[i]
-
-    # PRGA Phase
-    i = j = 0
+        x = (x + int(box[i]) + int(key[i % len(key)])) % 256
+        box[i], box[x] = box[x], box[i]
+    x = y = 0
+    out = []
     for char in data:
-        i = (i + 1) % 256
-        j = (j + S[i]) % 256
-        S[i], S[j] = S[j], S[i]
-
-        if sys.version_info.major == 2:
-            out.append(unichr(ord(char) ^ S[(S[i] + S[j]) % 256]))
-        else:
-            out.append(chr(ord(char) ^ S[(S[i] + S[j]) % 256]))
+        x = (x + 1) % 256
+        y = (y + box[x]) % 256
+        box[x], box[y] = box[y], box[x]
+        out.append(chr(ord(char) ^ box[(box[x] + box[y]) % 256]))
 
     return ''.join(out)
+
+
+def rc4_encrypt(key: bytes, data: str) -> bytes:
+    """ARC4 Encrypt - identical to original rc4(...), but uses python Cryptography, to ensure
+    proper ciphertext handling in Py3."""
+    cipher = Cipher(algorithms.ARC4(key), mode=None, backend=default_backend())
+    encryptor = cipher.encryptor()
+    ct = encryptor.update(bytes(data, 'utf-8'))
+    return ct
+
+def rc4_decrypt(key: bytes, data: bytes) -> str:
+    """ARC4 Decrypt - identical to original rc4(...), but uses python Cryptography, to ensure
+    proper ciphertext handling in Py3."""
+    cipher = Cipher(algorithms.ARC4(key), mode=None, backend=default_backend())
+    decryptor = cipher.decryptor()
+    pt = decryptor.update(data)+decryptor.finalize()
+    return pt
 
 
 class DiffieHellman(object):

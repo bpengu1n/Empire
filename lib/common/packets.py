@@ -265,6 +265,9 @@ def parse_routing_packet(stagingKey, data):
         +-----------+------+------+-------+--------+
 
     """
+    if isinstance(stagingKey, str):
+        stagingKey = bytes(stagingKey, 'utf-8')
+
 
     if data:
         results = {}
@@ -274,16 +277,13 @@ def parse_routing_packet(stagingKey, data):
         if len(data) >= 20:
 
             while True:
-
                 if len(data) - offset < 20:
                     break
 
-                
-
                 RC4IV = data[0+offset:4+offset]
                 RC4data = data[4+offset:20+offset]
-                encKey = RC4IV + bytes(stagingKey, 'utf8')
-                routingPacket = bytearray(encryption.rc4(encKey, RC4data), 'utf8')
+                encKey = RC4IV + stagingKey
+                routingPacket = encryption.rc4_decrypt(encKey, RC4data)
                 sessionID = routingPacket[0:8]
 
                 print("\nPACKET({}: {})\n".format(len(routingPacket), routingPacket[8:]))
@@ -353,18 +353,23 @@ def build_routing_packet(stagingKey, sessionID, language, meta="NONE", additiona
         +-----------+------+------+-------+--------+
 
     """
+    if isinstance(stagingKey, str):
+        stagingKey = bytes(stagingKey, 'utf-8')
+    if isinstance(encData, str):
+        encData = bytes(encData, 'utf-8')
 
     # binary pack all of the passed config values as unsigned numbers
     #   B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
     data = sessionID + struct.pack("=BBHL", LANGUAGE.get(language.upper(), 0), META.get(meta.upper(), 0), ADDITIONAL.get(additional.upper(), 0), len(encData)).decode('utf8')
-
+    
     RC4IV = os.urandom(4)
-    key = RC4IV + bytes(stagingKey, 'utf8')
+    key = RC4IV + stagingKey
+    print("LEN: {}".format(len(key)*8))
     print("\nPRE_DATA({}: {})\n".format(len(data), data))
-    rc4EncData = encryption.rc4(key, data)
+    rc4EncData = encryption.rc4_encrypt(key, data)
 
     # return an rc4 encyption of the routing packet, append an HMAC of the packet, then the actual encrypted data
-    packet = RC4IV + bytes(rc4EncData, 'utf8') + bytes(encData, 'utf8')
+    packet = RC4IV + rc4EncData + encData
 
     return packet
 
