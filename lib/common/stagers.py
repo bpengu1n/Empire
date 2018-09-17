@@ -109,6 +109,10 @@ class Stagers(object):
         try:
             launcherCode = self.mainMenu.listeners.loadedListeners[activeListener['moduleName']].generate_launcher(encode=encode, obfuscate=obfuscate, obfuscationCommand=obfuscationCommand, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds, stagerRetries=stagerRetries, language=language, listenerName=listenerName, safeChecks=safeChecks)
         except Exception as e:
+            import sys
+            import traceback
+            sys_t, sys_v, sys_tb = sys.exc_info()
+            traceback.print_tb(sys_tb, file=sys.stdout)
             print(helpers.color("[!] Error generating launcher: {}".format(e)))
         else:
             if launcherCode:

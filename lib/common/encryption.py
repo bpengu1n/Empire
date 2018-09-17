@@ -73,9 +73,16 @@ def pad(data):
     """
     Performs PKCS#7 padding for 128 bit block size.
     """
-
+    dec = False
+    if not isinstance(data, bytes):
+        dec = True
+        data = data.encode('iso-8859-1')
     pad = 16 - (len(data) % 16)
-    return data + to_bufferable(chr(pad) * pad)
+    data += to_bufferable(chr(pad) * pad)
+    if dec:
+        return data.decode('iso-8859-1')
+    else:
+        return data
 
     # return str(s) + chr(16 - len(str(s)) % 16) * (16 - len(str(s)) % 16)
 
@@ -136,7 +143,7 @@ def aes_encrypt(key, data):
     IV = os.urandom(16)
     cipher = Cipher(algorithms.AES(key), modes.CBC(IV), backend=backend)
     encryptor = cipher.encryptor()
-    ct = encryptor.update(pad(data))+encryptor.finalize()
+    ct = encryptor.update(pad(data.encode()))+encryptor.finalize()
     return IV + ct
 
 
@@ -144,8 +151,10 @@ def aes_encrypt_then_hmac(key, data):
     """
     Encrypt the data then calculate HMAC over the ciphertext.
     """
+    import binascii
     data = aes_encrypt(key, data)
-    mac = hmac.new(str(key), data, hashlib.sha256).digest()
+    mac = hmac.new(key, data, hashlib.sha256).digest()
+    print("DATA: {}".format(binascii.hexlify(data)))
     return data + mac[0:10]
 
 
@@ -173,7 +182,7 @@ def verify_hmac(key, data):
         expected = hmac.new(key, data, hashlib.sha256).digest()[0:10]
         # Double HMAC to prevent timing attacks. hmac.compare_digest() is
         # preferable, but only available since Python 2.7.7.
-        return hmac.new(str(key), expected).digest() == hmac.new(str(key), mac).digest()
+        return hmac.new(key, expected).digest() == hmac.new(key, mac).digest()
     else:
         return False
 
@@ -195,7 +204,41 @@ def generate_aes_key():
     return ''.join(random.sample(string.ascii_letters + string.digits + '!#$%&()*+,-./:;<=>?@[\]^_`{|}~', 32))
 
 
-def rc4(key: bytes, data: str) -> str:
+# Global variables
+state = [None] * 256
+p = q = None
+ 
+def rc4_init(key):
+    """RC4 Key Scheduling Algorithm (KSA)"""
+    global p, q, state
+    state = [n for n in range(256)]
+    p = q = j = 0
+    for i in range(256):
+        if len(key) > 0:
+            j = (j + state[i] + key[i % len(key)]) % 256
+        else:
+            j = (j + state[i]) % 256
+        state[i], state[j] = state[j], state[i]
+ 
+def byteGenerator():
+    """RC4 Pseudo-Random Generation Algorithm (PRGA)"""
+    global p, q, state
+    p = (p + 1) % 256
+    q = (q + state[p]) % 256
+    state[p], state[q] = state[q], state[p]
+    return state[(state[p] + state[q]) % 256]
+ 
+def rc4_enc(key, inputString):
+    """Encrypt input string returning a byte list"""
+    rc4_init(key)
+    return bytes([ord(p) ^ byteGenerator() for p in inputString])
+ 
+def rc4_dec(key, inputByteList):
+    """Decrypt input byte list returning a string"""
+    rc4_init(key)
+    return "".join([chr(c ^ byteGenerator()) for c in inputByteList])
+
+def rc4(key: bytes, data: bytes) -> str:
     """
     DEPRECATED - ciphertext generated is utf-8 encoded, deferring to official ARC4 from Python cryptography
     RC4 encrypt/decrypt the given data input with the specified key.

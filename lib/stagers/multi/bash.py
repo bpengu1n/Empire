@@ -71,15 +71,15 @@ class Stager(object):
             # generate the launcher code
             launcher = self.mainMenu.stagers.generate_launcher(listenerName, language=language, encode=True, userAgent=userAgent, safeChecks=safeChecks)
 
-            if launcher == b"":
+            if launcher == "":
                 print(helpers.color("[!] Error in launcher command generation."))
                 return ""
 
             else:
-                script = b"#!/bin/bash\n"
-                script += b"%s\n" %(launcher)
-                script += b"rm -f \"$0\"\n"
-                script += b"exit\n"
+                script = "#!/bin/bash\n"
+                script += "%s\n" %(launcher)
+                script += "rm -f \"$0\"\n"
+                script += "exit\n"
                 return script
         except Exception as e:
             import sys, traceback

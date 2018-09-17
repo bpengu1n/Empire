@@ -282,14 +282,18 @@ def parse_routing_packet(stagingKey, data):
 
                 RC4IV = data[0+offset:4+offset]
                 RC4data = data[4+offset:20+offset]
-                encKey = RC4IV + stagingKey
-                routingPacket = encryption.rc4_decrypt(encKey, RC4data)
+                encKey = RC4IV + stagingKey[:28]
+                routingPacket = encryption.rc4_dec(encKey, RC4data)
                 sessionID = routingPacket[0:8]
 
-                print("\nPACKET({}: {})\n".format(len(routingPacket), routingPacket[8:]))
+                
+
+                packetBytes = bytes(routingPacket, 'utf-8')
+                print("\nPACKET({}: {} - {})\n".format(routingPacket, packetBytes, packetBytes[8:]))
+                print("LEN: {}".format(len(packetBytes)))
 
                 # B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
-                (language, meta, additional, length) = struct.unpack("=BBHL", routingPacket[8:])
+                (language, meta, additional, length) = struct.unpack("=BBHL", packetBytes[8:16])
                 if length < 0:
                     message = "[*] parse_agent_data(): length in decoded rc4 packet is < 0"
                     signal = json.dumps({
@@ -361,15 +365,17 @@ def build_routing_packet(stagingKey, sessionID, language, meta="NONE", additiona
     # binary pack all of the passed config values as unsigned numbers
     #   B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
     data = sessionID + struct.pack("=BBHL", LANGUAGE.get(language.upper(), 0), META.get(meta.upper(), 0), ADDITIONAL.get(additional.upper(), 0), len(encData)).decode('utf8')
-    
-    RC4IV = os.urandom(4)
-    key = RC4IV + stagingKey
+    import binascii
+    RC4IV = binascii.hexlify(os.urandom(2))
+    key = RC4IV + stagingKey[:28]
     print("LEN: {}".format(len(key)*8))
     print("\nPRE_DATA({}: {})\n".format(len(data), data))
-    rc4EncData = encryption.rc4_encrypt(key, data)
+    rc4EncData = encryption.rc4_enc(key, data)
+    print("past encr")
 
     # return an rc4 encyption of the routing packet, append an HMAC of the packet, then the actual encrypted data
     packet = RC4IV + rc4EncData + encData
+    print("gen packet")
 
     return packet
 
