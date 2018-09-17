@@ -1,8 +1,6 @@
-from __future__ import print_function
-from builtins import chr
-from builtins import range
 import os
 import struct
+import binascii
 
 LANGUAGE = {
     'NONE' : 0,
@@ -11,7 +9,7 @@ LANGUAGE = {
 }
 
 LANGUAGE_IDS = {}
-for name, ID in list(LANGUAGE.items()): LANGUAGE_IDS[ID] = name
+for name, ID in LANGUAGE.items(): LANGUAGE_IDS[ID] = name
 
 META = {
     'NONE' : 0,
@@ -22,17 +20,17 @@ META = {
     'SERVER_RESPONSE' : 5
 }
 META_IDS = {}
-for name, ID in list(META.items()): META_IDS[ID] = name
+for name, ID in META.items(): META_IDS[ID] = name
 
 ADDITIONAL = {}
 ADDITIONAL_IDS = {}
-for name, ID in list(ADDITIONAL.items()): ADDITIONAL_IDS[ID] = name
+for name, ID in ADDITIONAL.items(): ADDITIONAL_IDS[ID] = name
 
 def rc4(key, data):
     """
     Decrypt/encrypt the passed data using RC4 and the given key.
     """
-    S,j,out=list(range(256)),0,[]
+    S,j,out=range(256),0,[]
     for i in range(256):
         j=(j+S[i]+ord(key[i%len(key)]))%256
         S[i],S[j]=S[j],S[i]
@@ -105,11 +103,11 @@ def parse_routing_packet(stagingKey, data):
             return results
 
         else:
-            print("[*] parse_agent_data() data length incorrect: %s" % (len(data)))
+            print "[*] parse_agent_data() data length incorrect: %s" % (len(data))
             return None
 
     else:
-        print("[*] parse_agent_data() data is None")
+        print "[*] parse_agent_data() data is None"
         return None
 
 
@@ -140,8 +138,8 @@ def build_routing_packet(stagingKey, sessionID, meta=0, additional=0, encData=''
     #   B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
     data = sessionID + struct.pack("=BBHL", 2, meta, additional, len(encData))
 
-    RC4IV = os.urandom(4)
-    key = RC4IV + stagingKey
+    RC4IV = binascii.hexlify(os.urandom(2))
+    key = RC4IV + stagingKey[:28]
     rc4EncData = rc4(key, data)
     packet = RC4IV + rc4EncData + encData
     return packet
