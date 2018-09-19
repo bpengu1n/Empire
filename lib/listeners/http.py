@@ -745,7 +745,7 @@ class Listener(object):
             code = code.replace('jitter = 0.0', 'jitter = %s' % (jitter))
             code = code.replace('profile = "/admin/get.php,/news.php,/login/process.php|Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0) like Gecko"', 'profile = "%s"' % (profile))
             code = code.replace('lostLimit = 60', 'lostLimit = %s' % (lostLimit))
-            code = code.replace('defaultResponse = base64.b64decode("")', 'defaultResponse = base64.b64decode("%s")' % (b64DefaultResponse))
+            code = code.replace('defaultResponse = base64.b64decode("")', 'defaultResponse = base64.b64decode("%s")' % (b64DefaultResponse.decode('utf-8')))
 
             # patch in the killDate and workingHours if they're specified
             if killDate != "":
@@ -1227,9 +1227,6 @@ def send_message(packets=None):
                             agentCode = self.generate_agent(language=language, listenerOptions=tempListenerOptions, obfuscate=self.mainMenu.obfuscate, obfuscationCommand=self.mainMenu.obfuscateCommand)
                             encryptedAgent = encryption.aes_encrypt_then_hmac(sessionKey, agentCode)
                             # TODO: wrap ^ in a routing packet?
-                            import binascii
-                            print("BEFORESEND: {}".format(binascii.hexlify(encryptedAgent)))
-
                             return make_response(encryptedAgent, 200)
 
                         elif resStr[:10].lower().startswith('error') or resStr[:10].lower().startswith('exception'):

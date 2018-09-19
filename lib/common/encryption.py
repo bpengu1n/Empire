@@ -392,14 +392,11 @@ class DiffieHellman(object):
         """
         Derive the shared secret, then hash it to obtain the shared key.
         """
-        import binascii
-        
         self.sharedSecret = self.genSecret(self.privateKey, otherKey)
         # Convert the shared secret (int) to an array of bytes in network order
         # Otherwise hashlib can't hash it.
-        hex_string = '{:x}'.format(self.sharedSecret)
-        n = len(hex_string)
-        _sharedSecretBytes = unhexlify(hex_string.zfill(n + (n & 1)))
+        _h = '{:x}'.format(self.sharedSecret)
+        _sharedSecretBytes = unhexlify(_h.zfill(len(_h) + (len(_h) & 1)))
         s = hashlib.sha256()
         s.update(bytes(_sharedSecretBytes))
         self.key = s.digest()

@@ -391,22 +391,14 @@ def verify_hmac(key, data):
     """
     Verify the HMAC supplied in the data with the given key.
     """
-    import binascii
-    print "in hmac"
     if len(data) > 20:
         mac = data[-10:]
         data = data[:-10]
         expected = hmac.new(key, data, hashlib.sha256).digest()[0:10]
         # Double HMAC to prevent timing attacks. hmac.compare_digest() is
         # preferable, but only available since Python 2.7.7.
-        print binascii.hexlify(hmac.new(key, expected).digest())
-        print binascii.hexlify(hmac.new(key, mac).digest())
-        print "MAC: {}".format(binascii.hexlify(mac))
-        print "DATA: {}".format(binascii.hexlify(data))
-        print "{}".format(binascii.hexlify(expected))
         return hmac.new(key, expected).digest() == hmac.new(key, mac).digest()
     else:
-        print "bad"
         return False
 
 
@@ -415,6 +407,5 @@ def aes_decrypt_and_verify(key, data):
     Decrypt the data, but only if it has a valid MAC.
     """
     if len(data) > 32 and verify_hmac(key, data):
-        print "good!"
         return aes_decrypt(key, data[:-10])
     raise Exception("Invalid ciphertext received {}.".format(len(data)))

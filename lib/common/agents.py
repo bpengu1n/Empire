@@ -1349,11 +1349,7 @@ class Agents(object):
                     serverPub = encryption.DiffieHellman()
                     serverPub.genKey(clientPub)
                     # serverPub.key == the negotiated session key
-                    import binascii
                     
-
-                    print("KEY({}): '{}' / '{}'".format(len(serverPub.key), serverPub.key, binascii.hexlify(serverPub.key)))
-
                     nonce = helpers.random_string(16, charset=string.digits)
 
                     message = "[*] Agent {} from {} posted valid Python PUB key".format(sessionID, clientIP)
@@ -1375,7 +1371,6 @@ class Agents(object):
 
                     # step 4 of negotiation -> server returns HMAC(AESn(nonce+PUBs))
                     data = "%s%s" % (nonce, serverPub.publicKey)
-                    print("serverPub: {} + {}".format(nonce, serverPub.publicKey))
                     encryptedMsg = encryption.aes_encrypt_then_hmac(stagingKey, data)
                     # TODO: wrap this in a routing packet?
 
