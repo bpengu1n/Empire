@@ -12,7 +12,6 @@ from flask_socketio import SocketIO, join_room, leave_room, disconnect, send, em
 from flask_login import current_user, login_manager, login_required, login_user, logout_user, UserMixin, LoginManager
 from time import localtime, strftime, sleep
 import hashlib
-from OpenSSL import SSL
 import ssl
 import ast
 # Empire imports

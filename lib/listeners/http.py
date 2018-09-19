@@ -737,9 +737,6 @@ class Listener(object):
             commsCode = self.generate_comms(listenerOptions=listenerOptions, language=language)
             code = code.replace('REPLACE_COMMS', commsCode)
 
-            # strip out comments and blank lines
-            code = helpers.strip_python_comments(code)
-
             # patch in the delay, jitter, lost limit, and comms profile
             code = code.replace('delay = 60', 'delay = %s' % (delay))
             code = code.replace('jitter = 0.0', 'jitter = %s' % (jitter))
