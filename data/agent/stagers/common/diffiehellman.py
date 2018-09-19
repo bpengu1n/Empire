@@ -3,15 +3,7 @@ DH code from: https://github.com/lowazo/pyDHE """
 
 import os
 import hashlib
-
-# If a secure random number generator is unavailable, exit with an error.
-try:
-    import ssl
-    random_function = ssl.RAND_bytes
-    random_provider = "Python SSL"
-except:
-    random_function = os.urandom
-    random_provider = "os.urandom"
+from binascii import unhexlify
 
 class DiffieHellman(object):
     """
@@ -81,9 +73,9 @@ class DiffieHellman(object):
         while(len(bin(_rand))-2 < bits):
 
             try:
-                _rand = int.from_bytes(random_function(_bytes), byteorder='big')
+                _rand = int.from_bytes(os.urandom(_bytes), byteorder='big')
             except:
-                _rand = int(random_function(_bytes).encode('hex'), 16)
+                _rand = int(os.urandom(_bytes).encode('hex'), 16)
 
         return _rand
 
@@ -128,11 +120,9 @@ class DiffieHellman(object):
 
         # Convert the shared secret (int) to an array of bytes in network order
         # Otherwise hashlib can't hash it.
-        try:
-            _sharedSecretBytes = self.sharedSecret.to_bytes(
-                len(bin(self.sharedSecret))-2 // 8 + 1, byteorder="big")
-        except AttributeError:
-            _sharedSecretBytes = str(self.sharedSecret)
+        hex_string = '%x' % self.sharedSecret
+        n = len(hex_string)
+        _sharedSecretBytes = unhexlify(hex_string.zfill(n + (n & 1)))
 
         s = hashlib.sha256()
         s.update(bytes(_sharedSecretBytes))

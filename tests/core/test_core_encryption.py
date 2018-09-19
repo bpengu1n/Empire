@@ -8,6 +8,8 @@ import coverage
 import sys
 import os
 import binascii
+import random
+import string
 
 sys.path.append('..')
 from tests.BaseTest import EmpireTestCase
@@ -50,3 +52,37 @@ class TestCoreEncryptionModel(EmpireTestCase):
             self.assertEqual(pT2, d)
             self.assertEqual(pT3, d)
             self.assertEqual(pT4, d)
+    
+    def test_02_aes_hmac(self):
+        punctuation = '!#%&()*+,-./:;<=>?@[]^_{|}~'
+        _staging_key = ''.join(random.sample(string.ascii_letters + string.digits + punctuation, 32))
+        _staging_key = bytes(_staging_key, 'utf-8')
+        _data = [
+            "TestOne",
+            "TestTwo",
+            "TestThree"
+        ]
+
+        for d in _data:
+            cT = encryption.aes_encrypt(_staging_key, d)
+            cT2 = encryption.aes_encrypt(_staging_key, d)
+            hmac_cT = encryption.aes_encrypt_then_hmac(_staging_key, d)
+            hmac_verified = encryption.verify_hmac(_staging_key, hmac_cT)
+            pT = encryption.aes_decrypt(_staging_key, cT).decode('utf-8')
+            pT2 = encryption.aes_decrypt(_staging_key, cT2).decode('utf-8')
+            hmac_pT = encryption.aes_decrypt_and_verify(_staging_key, hmac_cT).decode('utf-8')
+
+            self.assertNotEqual(cT, d)
+            self.assertNotEqual(cT, cT2)
+            self.assertEqual(pT, d)
+            self.assertEqual(pT2, d)
+            self.assertTrue(hmac_verified, msg="HMAC verification failed.")
+            self.assertEqual(hmac_pT, d)
+
+    def test_03_dhe(self):
+        alice = encryption.DiffieHellman()
+        bob = encryption.DiffieHellman()
+        alice.genKey(bob.publicKey)
+        bob.genKey(alice.publicKey)
+
+        self.assertTrue(alice.getKey() == bob.getKey())

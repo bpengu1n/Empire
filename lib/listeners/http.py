@@ -672,7 +672,7 @@ class Listener(object):
                 import binascii
                 RC4IV = binascii.hexlify(os.urandom(2))
                 stagingKey = bytes(stagingKey, 'utf-8')
-                cT = encryption.rc4_enc(RC4IV+stagingKey[:28], stager)
+                cT = encryption.rc4_enc(RC4IV+stagingKey, stager)
                 return (RC4IV + cT)
             else:
                 # otherwise return the standard stager
@@ -698,7 +698,7 @@ class Listener(object):
         lostLimit = listenerOptions['DefaultLostLimit']['Value']
         killDate = listenerOptions['KillDate']['Value']
         workingHours = listenerOptions['WorkingHours']['Value']
-        b64DefaultResponse = base64.b64encode(self.default_response())
+        b64DefaultResponse = base64.b64encode(self.default_response().encode())
 
         if language == 'powershell':
 
@@ -1070,7 +1070,7 @@ def send_message(packets=None):
                         })
                         dispatcher.send(signal, sender="listeners/http/{}".format(listenerName))
                         cookieParts = cookie.split(';')
-                        print("Found cookieParts: {}".format(cookieParts))
+
                         for part in cookieParts:
                             if part.startswith(session_cookie):
                                 base64RoutingPacket = part[part.find('=')+1:]
@@ -1092,6 +1092,8 @@ def send_message(packets=None):
                 if dataResults and len(dataResults) > 0:
                     for (language, results) in dataResults:
                         if results:
+                            if isinstance(results, bytes):
+                                results = results.decode('latin-1')
                             if results == 'STAGE0':
                                 # handle_agent_data() signals that the listener should return the stager.ps1 code
 
@@ -1127,7 +1129,7 @@ def send_message(packets=None):
                                 listenerName = self.options['Name']['Value']
                                 message = "[*] Agent from {} retrieved taskings".format(clientIP)
                                 signal = json.dumps({
-                                    'print': False,
+                                    'print': True,
                                     'message': message
                                 })
                                 dispatcher.send(signal, sender="listeners/http/{}".format(listenerName))
@@ -1162,7 +1164,7 @@ def send_message(packets=None):
             listenerName = self.options['Name']['Value']
             message = "[*] POST request data length from {} : {}".format(clientIP, len(requestData))
             signal = json.dumps({
-                'print': False,
+                'print': True,
                 'message': message
             })
             dispatcher.send(signal, sender="listeners/http/{}".format(listenerName))
@@ -1177,7 +1179,7 @@ def send_message(packets=None):
                     
                     message = "[*] POST cookie value from {} : {}".format(clientIP, cookie)
                     signal = json.dumps({
-                        'print': False,
+                        'print': True,
                         'message': message
                     })
                     dispatcher.send(signal, sender="listeners/http/{}".format(listenerName))
@@ -1186,7 +1188,7 @@ def send_message(packets=None):
                 
                 message = "[!] Error retrieving cookie value from {}: {}".format(clientIP, e)
                 signal = json.dumps({
-                    'print': False,
+                    'print': True,
                     'message': message
                 })
                 dispatcher.send(signal, sender="listeners/http/{}".format(listenerName))
@@ -1196,10 +1198,9 @@ def send_message(packets=None):
             dataResults = self.mainMenu.agents.handle_agent_data(stagingKey, requestData, listenerOptions, clientIP)
             if dataResults and len(dataResults) > 0:
                 for (language, results) in dataResults:
-                    if results:
-                        if isinstance(results, bytes):
-                            results = results.decode('iso-8859-1')
-                        if results.startswith('STAGE2'):
+                    if results:                        
+                        resStr = results.decode('iso-8859-1') if isinstance(results, bytes) else results
+                        if resStr.startswith('STAGE2'):
                             # TODO: document the exact results structure returned
                             if ':' in clientIP:
                                 clientIP = '[' + str(clientIP) + ']'
@@ -1231,7 +1232,7 @@ def send_message(packets=None):
 
                             return make_response(encryptedAgent, 200)
 
-                        elif results[:10].lower().startswith('error') or results[:10].lower().startswith('exception'):
+                        elif resStr[:10].lower().startswith('error') or resStr[:10].lower().startswith('exception'):
                             listenerName = self.options['Name']['Value']
                             message = "[!] Error returned for results by {} : {}".format(clientIP, results)
                             signal = json.dumps({
@@ -1240,11 +1241,11 @@ def send_message(packets=None):
                             })
                             dispatcher.send(signal, sender="listeners/http/{}".format(listenerName))
                             return make_response(self.default_response(), 404)
-                        elif results == 'VALID':
+                        elif resStr == 'VALID':
                             listenerName = self.options['Name']['Value']
                             message = "[*] Valid results returned by {}".format(clientIP)
                             signal = json.dumps({
-                                'print': False,
+                                'print': True,
                                 'message': message
                             })
                             dispatcher.send(signal, sender="listeners/http/{}".format(listenerName))

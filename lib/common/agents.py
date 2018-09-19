@@ -1349,6 +1349,10 @@ class Agents(object):
                     serverPub = encryption.DiffieHellman()
                     serverPub.genKey(clientPub)
                     # serverPub.key == the negotiated session key
+                    import binascii
+                    
+
+                    print("KEY({}): '{}' / '{}'".format(len(serverPub.key), serverPub.key, binascii.hexlify(serverPub.key)))
 
                     nonce = helpers.random_string(16, charset=string.digits)
 
@@ -1371,6 +1375,7 @@ class Agents(object):
 
                     # step 4 of negotiation -> server returns HMAC(AESn(nonce+PUBs))
                     data = "%s%s" % (nonce, serverPub.publicKey)
+                    print("serverPub: {} + {}".format(nonce, serverPub.publicKey))
                     encryptedMsg = encryption.aes_encrypt_then_hmac(stagingKey, data)
                     # TODO: wrap this in a routing packet?
 
@@ -1392,7 +1397,7 @@ class Agents(object):
 
             try:
                 message = encryption.aes_decrypt_and_verify(sessionKey, encData)
-                parts = message.split('|')
+                parts = message.split(b'|')
 
                 if len(parts) < 12:
                     message = "[!] Agent {} posted invalid sysinfo checkin format: {}".format(sessionID, message)
@@ -1428,7 +1433,7 @@ class Agents(object):
                 domainname = str(parts[2], 'utf-8')
                 username = str(parts[3], 'utf-8')
                 hostname = str(parts[4], 'utf-8')
-                external_ip = str(clientIP, 'utf-8')
+                external_ip = clientIP
                 internal_ip = str(parts[5], 'utf-8')
                 os_details = str(parts[6], 'utf-8')
                 high_integrity = str(parts[7], 'utf-8')
@@ -1442,6 +1447,10 @@ class Agents(object):
                     high_integrity = 0
 
             except Exception as e:
+                import sys
+                from traceback import print_tb
+                _,_,sys_tb = sys.exc_info()
+                print_tb(sys_tb, file=sys.stdout)
                 message = "[!] Exception in agents.handle_agent_staging() for {} : {}".format(sessionID, e)
                 signal = json.dumps({
                     'print': True,
@@ -1616,7 +1625,7 @@ class Agents(object):
             for tasking in taskings:
                 task_name, task_data, res_id = tasking
 
-                all_task_packets += packets.build_task_packet(task_name, task_data, res_id)
+                all_task_packets += packets.build_task_packet(task_name, task_data, res_id).decode('utf-8')
 
             # get the session key for the agent
             session_key = self.agents[sessionID]['sessionKey']

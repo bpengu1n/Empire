@@ -167,8 +167,8 @@ def build_task_packet(taskName, data, resultID):
     totalPacket = struct.pack('=H', 1)
     packetNum = struct.pack('=H', 1)
     resultID = struct.pack('=H', resultID)
-    length = struct.pack('=L',len(data.decode('utf-8').encode('utf-8',errors='ignore')))
-    return taskType + totalPacket + packetNum + resultID + length + data.decode('utf-8').encode('utf-8',errors='ignore')
+    length = struct.pack('=L',len(data.encode('utf-8',errors='ignore')))
+    return taskType + totalPacket + packetNum + resultID + length + data.encode('utf-8',errors='ignore')
 
 
 def parse_result_packet(packet, offset=0):
@@ -289,8 +289,6 @@ def parse_routing_packet(stagingKey, data):
                 
 
                 packetBytes = bytes(routingPacket, 'utf-8')
-                print("\nPACKET({}: {} - {})\n".format(routingPacket, packetBytes, packetBytes[8:]))
-                print("LEN: {}".format(len(packetBytes)))
 
                 # B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
                 (language, meta, additional, length) = struct.unpack("=BBHL", packetBytes[8:16])
@@ -370,7 +368,7 @@ def build_routing_packet(stagingKey, sessionID, language, meta="NONE", additiona
     key = RC4IV + stagingKey[:28]
     print("LEN: {}".format(len(key)*8))
     print("\nPRE_DATA({}: {})\n".format(len(data), data))
-    rc4EncData = encryption.rc4_enc(key, data)
+    rc4EncData = encryption.rc4_enc(bytes(key), data)
     print("past encr")
 
     # return an rc4 encyption of the routing packet, append an HMAC of the packet, then the actual encrypted data

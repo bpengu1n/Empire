@@ -37,7 +37,7 @@ import random
 from xml.dom.minidom import parseString
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
-from binascii import hexlify
+from binascii import hexlify, unhexlify
 
 
 def to_bufferable(binary):
@@ -59,15 +59,6 @@ except Exception:
 
     def _get_byte(c):
         return c
-
-# If a secure random number generator is unavailable, exit with an error.
-try:
-    import ssl
-    random_function = ssl.RAND_bytes
-    random_provider = "Python SSL"
-except:
-    random_function = os.urandom
-    random_provider = "os.urandom"
 
 def pad(data):
     """
@@ -154,7 +145,6 @@ def aes_encrypt_then_hmac(key, data):
     import binascii
     data = aes_encrypt(key, data)
     mac = hmac.new(key, data, hashlib.sha256).digest()
-    print("DATA: {}".format(binascii.hexlify(data)))
     return data + mac[0:10]
 
 
@@ -170,6 +160,8 @@ def aes_decrypt(key, data):
         decryptor = cipher.decryptor()
         pt = depad(decryptor.update(data[16:])+decryptor.finalize())
         return pt
+    else:
+        raise Exception("len(data): {} <= 16".format(len(data)))
 
 
 def verify_hmac(key, data):
@@ -238,7 +230,8 @@ def rc4_dec(key, inputByteList):
     rc4_init(key)
     return "".join([chr(c ^ byteGenerator()) for c in inputByteList])
 
-def rc4(key: bytes, data: bytes) -> str:
+def rc4(key, data):
+    #typing: bytes, bytes - > str
     """
     DEPRECATED - ciphertext generated is utf-8 encoded, deferring to official ARC4 from Python cryptography
     RC4 encrypt/decrypt the given data input with the specified key.
@@ -264,7 +257,7 @@ def rc4(key: bytes, data: bytes) -> str:
     return ''.join(out)
 
 
-def rc4_encrypt(key: bytes, data: str) -> bytes:
+def rc4_encrypt(key, data):
     """ARC4 Encrypt - identical to original rc4(...), but uses python Cryptography, to ensure
     proper ciphertext handling in Py3."""
     cipher = Cipher(algorithms.ARC4(key), mode=None, backend=default_backend())
@@ -272,7 +265,7 @@ def rc4_encrypt(key: bytes, data: str) -> bytes:
     ct = encryptor.update(bytes(data, 'utf-8'))
     return ct
 
-def rc4_decrypt(key: bytes, data: bytes) -> str:
+def rc4_decrypt(key, data):
     """ARC4 Decrypt - identical to original rc4(...), but uses python Cryptography, to ensure
     proper ciphertext handling in Py3."""
     cipher = Cipher(algorithms.ARC4(key), mode=None, backend=default_backend())
@@ -355,10 +348,10 @@ class DiffieHellman(object):
         while(len(bin(_rand))-2 < bits):
             try:
                 # Python 3
-                _rand = int.from_bytes(random_function(_bytes), byteorder='big')
+                _rand = int.from_bytes(os.urandom(_bytes), byteorder='big')
             except:
                 # Python 2
-                _rand = int(random_function(_bytes).encode('hex'), 16)
+                _rand = int(os.urandom(_bytes).encode('hex'), 16)
 
         return _rand
 
@@ -399,16 +392,14 @@ class DiffieHellman(object):
         """
         Derive the shared secret, then hash it to obtain the shared key.
         """
+        import binascii
+        
         self.sharedSecret = self.genSecret(self.privateKey, otherKey)
-
         # Convert the shared secret (int) to an array of bytes in network order
         # Otherwise hashlib can't hash it.
-        try:
-            _sharedSecretBytes = self.sharedSecret.to_bytes(
-                len(bin(self.sharedSecret))-2 // 8 + 1, byteorder="big")
-        except AttributeError:
-            _sharedSecretBytes = str(self.sharedSecret)
-
+        hex_string = '{:x}'.format(self.sharedSecret)
+        n = len(hex_string)
+        _sharedSecretBytes = unhexlify(hex_string.zfill(n + (n & 1)))
         s = hashlib.sha256()
         s.update(bytes(_sharedSecretBytes))
         self.key = s.digest()
