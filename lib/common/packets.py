@@ -169,8 +169,10 @@ def build_task_packet(taskName, data, resultID):
     totalPacket = struct.pack('=H', 1)
     packetNum = struct.pack('=H', 1)
     resultID = struct.pack('=H', resultID)
-    length = struct.pack('=L',len(data.encode('utf-8',errors='ignore')))
-    return taskType + totalPacket + packetNum + resultID + length + data.encode('utf-8',errors='ignore')
+    if isinstance(data, str):
+        data = data.encode('utf-8', errors='ignore')
+    length = struct.pack('=L',len(data))
+    return taskType + totalPacket + packetNum + resultID + length + data
 
 
 def parse_result_packet(packet, offset=0):
@@ -367,6 +369,7 @@ def build_routing_packet(stagingKey, sessionID, language, meta="NONE", additiona
 
     # binary pack all of the passed config values as unsigned numbers
     #   B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
+    # Need to fix this, something in struct.pack is screwing up the decode on file upload
     data = str_to_bytestr(sessionID + struct.pack("=BBHL", LANGUAGE.get(language.upper(), 0), META.get(meta.upper(), 0), ADDITIONAL.get(additional.upper(), 0), len(encData)).decode('utf8'))
     
     RC4IV = hexlify(os.urandom(2))

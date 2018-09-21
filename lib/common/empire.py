@@ -2481,10 +2481,12 @@ class PowerShellAgentMenu(SubMenu):
                 # Check the file size against the upload limit of 1 mb
 
                 # read in the file and base64 encode it for transport
-                open_file = open(parts[0], 'r')
-                file_data = open_file.read()
-                open_file.close()
-
+                with open(parts[0], 'rb') as open_file:
+                    file_data = open_file.read()
+                if isinstance(file_data, bytes):
+                    print("is bytes")
+                else:
+                    print("is not bytes")
                 size = os.path.getsize(parts[0])
                 if size > 1048576:
                     print(
@@ -3669,9 +3671,9 @@ class PythonAgentMenu(SubMenu):
                 # TODO: reimplement Python file upload
 
                 # # read in the file and base64 encode it for transport
-                f = open(parts[0], 'r')
-                fileData = f.read()
-                f.close()
+                with open(parts[0], 'rb') as f:
+                    fileData = f.read()
+                
                 # Get file size
                 size = os.path.getsize(parts[0])
                 if size > 1048576:
@@ -3697,7 +3699,7 @@ class PythonAgentMenu(SubMenu):
                     # get final file size
                     fileData = helpers.encode_base64(fileData)
                     # upload packets -> "filename | script data"
-                    data = uploadname + "|" + fileData
+                    data = uploadname.encode('utf-8') + b"|" + fileData
 
                     # dispatch this event
                     message = "[*] Starting upload of {}, final size {}".format(
@@ -3713,7 +3715,7 @@ class PythonAgentMenu(SubMenu):
                                     sender="agents/{}".format(self.sessionID))
 
                     self.mainMenu.agents.add_agent_task_db(
-                        self.sessionID, "TASK_UPLOAD", data)
+                        self.sessionID, "TASK_UPLOAD", base64.b64encode(data).decode('utf-8'))
             else:
                 print(
                     helpers.color("[!] Please enter a valid file path to upload"))

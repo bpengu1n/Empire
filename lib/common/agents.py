@@ -1619,6 +1619,9 @@ class Agents(object):
             # build tasking packets for everything we have
             for tasking in taskings:
                 task_name, task_data, res_id = tasking
+                if task_name == "TASK_UPLOAD":
+                    import base64
+                    task_data = base64.b64decode(task_data.encode('utf-8'))
 
                 all_task_packets += packets.build_task_packet(task_name, task_data, res_id).decode('utf-8')
 
