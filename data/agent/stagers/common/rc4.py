@@ -156,7 +156,7 @@ def build_routing_packet(stagingKey, sessionID, meta=0, additional=0, encData=''
     data = sessionID + struct.pack("=BBHL", 2, meta, additional, len(encData))
 
     RC4IV = binascii.hexlify(os.urandom(2))
-    key = RC4IV + stagingKey[:28]
+    key = RC4IV + stagingKey
     rc4EncData = rc4_enc(key, data)
     packet = RC4IV + rc4EncData + encData
     return packet
