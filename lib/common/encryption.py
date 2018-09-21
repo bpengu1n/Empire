@@ -40,16 +40,10 @@ from cryptography.hazmat.backends import default_backend
 from binascii import hexlify, unhexlify
 
 
-def to_bufferable(binary):
-    return binary
 
-def _get_byte(c):
-    return ord(c)
 
 # Python 3 compatibility stuffz
-try:
-    xrange
-except Exception:
+if sys.version_info[0] == 3:
     xrange = range
 
     def to_bufferable(binary):
@@ -59,6 +53,12 @@ except Exception:
 
     def _get_byte(c):
         return c
+else:
+    def to_bufferable(binary):
+        return binary
+
+    def _get_byte(c):
+        return ord(c)
 
 def pad(data):
     """
@@ -220,10 +220,10 @@ def byteGenerator():
     state[p], state[q] = state[q], state[p]
     return state[(state[p] + state[q]) % 256]
  
-def rc4_enc(key, inputString):
+def rc4_enc(key: bytes, input: bytes) -> bytes:
     """Encrypt input string returning a byte list"""
     rc4_init(key)
-    return bytes([p ^ byteGenerator() for p in inputString])
+    return bytes([p ^ byteGenerator() for p in input])
  
 def rc4_dec(key, inputByteList):
     """Decrypt input byte list returning a string"""

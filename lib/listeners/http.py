@@ -672,7 +672,7 @@ class Listener(object):
                 import binascii
                 RC4IV = binascii.hexlify(os.urandom(2))
                 stagingKey = bytes(stagingKey, 'utf-8')
-                cT = encryption.rc4_enc(RC4IV+stagingKey, stager)
+                cT = encryption.rc4_enc(RC4IV+stagingKey, bytes(stager, 'utf-8'))
                 return (RC4IV + cT)
             else:
                 # otherwise return the standard stager
@@ -1070,7 +1070,9 @@ def send_message(packets=None):
 
                         for part in cookieParts:
                             if part.startswith(session_cookie):
-                                routingPacket = part[part.find('=')+1:]
+                                base64RoutingPacket = part[part.find('=')+1:].encode('utf-8')
+                                # decode the routing packet base64 value in the cookie
+                                routingPacket = base64.b64decode(base64RoutingPacket)
                 except Exception as e:
                     message = "[*] Failed to obtain routing packet: {}".format(str(e))
                     signal = json.dumps({
