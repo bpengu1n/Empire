@@ -69,6 +69,8 @@ import hashlib
 import hmac
 import json
 from pydispatch import dispatcher
+from binascii import hexlify
+from binascii import unhexlify
 
 # Empire imports
 from . import encryption
@@ -332,6 +334,9 @@ def parse_routing_packet(stagingKey, data):
         dispatcher.send(signal, sender="empire")
         return None
 
+def str_to_bytestr(string, encoding='utf8'):
+    return unhexlify(hexlify(string.encode(encoding)))
+
 
 def build_routing_packet(stagingKey, sessionID, language, meta="NONE", additional="NONE", encData=''):
     """
@@ -362,20 +367,20 @@ def build_routing_packet(stagingKey, sessionID, language, meta="NONE", additiona
 
     # binary pack all of the passed config values as unsigned numbers
     #   B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
-    data = sessionID + struct.pack("=BBHL", LANGUAGE.get(language.upper(), 0), META.get(meta.upper(), 0), ADDITIONAL.get(additional.upper(), 0), len(encData)).decode('utf8')
-    import binascii
-    RC4IV = binascii.hexlify(os.urandom(2))
-    key = RC4IV + stagingKey[:28]
-    print("LEN: {}".format(len(key)*8))
-    print("\nPRE_DATA({}: {})\n".format(len(data), data))
-    rc4EncData = encryption.rc4_enc(bytes(key), data)
-    print("past encr")
+    data = str_to_bytestr(sessionID + struct.pack("=BBHL", LANGUAGE.get(language.upper(), 0), META.get(meta.upper(), 0), ADDITIONAL.get(additional.upper(), 0), len(encData)).decode('utf8'))
+    
+    RC4IV = hexlify(os.urandom(2))
+    key = RC4IV + stagingKey
+    print("Data: {}".format(data))
+    rc4EncData = encryption.rc4_enc(key, data)
+
+    if isinstance(encData, str):
+        encData = encData.encode('utf8')
 
     # return an rc4 encyption of the routing packet, append an HMAC of the packet, then the actual encrypted data
     packet = RC4IV + rc4EncData + encData
-    print("gen packet")
-
-    return packet
+    
+    return base64.b64encode(packet)
 
 
 def resolve_id(PacketID):

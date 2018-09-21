@@ -851,12 +851,15 @@ def decode_base64(data):
     """
     missing_padding = 4 - len(data) % 4
     if missing_padding:
-        data += b'=' * missing_padding
+        data += '=' * missing_padding
 
     try:
-        result = base64.decodestring(data)
+        try:
+            result = base64.decodestring(data)
+        except TypeError:
+            result = base64.b64decode(data)
         return result
-    except binascii.Error:
+    except Exception:
         # if there's a decoding error, just return the data
         return data
 

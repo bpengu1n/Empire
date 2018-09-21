@@ -52,7 +52,16 @@ class TestCoreEncryptionModel(EmpireTestCase):
             self.assertEqual(pT2, d)
             self.assertEqual(pT3, d)
             self.assertEqual(pT4, d)
+
+    def test_02_rc4_b(self):
+        """Testing RC4 with known plaintext/ciphertext"""
+        from binascii import hexlify, unhexlify
+        pt_data = unhexlify(b'4834504d3538324b020600002a000000') #DevSkim: ignore DS173237 
+        key = b'34393432' + unhexlify(b'696d747847615b637a77645776513e4479456741213765732628255566503b5d') #DevSkim: ignore DS173237,DS117838 
+        ct_data = unhexlify(b'6a53af2a77ad010a10017b79d21d7553') #DevSkim: ignore DS173237 
     
+
+
     def test_02_aes_hmac(self):
         punctuation = '!#%&()*+,-./:;<=>?@[]^_{|}~'
         _staging_key = ''.join(random.sample(string.ascii_letters + string.digits + punctuation, 32))

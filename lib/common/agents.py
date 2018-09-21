@@ -1713,6 +1713,8 @@ class Agents(object):
         nameid = self.get_agent_id_db(sessionID)
         if nameid:
             sessionID = nameid
+        if isinstance(data, bytes):
+            data = str(data, 'utf8')
 
         conn = self.get_db_connection()
         try:

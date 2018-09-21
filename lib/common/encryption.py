@@ -223,7 +223,7 @@ def byteGenerator():
 def rc4_enc(key, inputString):
     """Encrypt input string returning a byte list"""
     rc4_init(key)
-    return bytes([ord(p) ^ byteGenerator() for p in inputString])
+    return bytes([p ^ byteGenerator() for p in inputString])
  
 def rc4_dec(key, inputByteList):
     """Decrypt input byte list returning a string"""

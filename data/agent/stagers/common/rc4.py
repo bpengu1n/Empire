@@ -1,6 +1,7 @@
 import os
 import struct
 import binascii
+import base64
 
 LANGUAGE = {
     'NONE' : 0,
@@ -26,22 +27,36 @@ ADDITIONAL = {}
 ADDITIONAL_IDS = {}
 for name, ID in ADDITIONAL.items(): ADDITIONAL_IDS[ID] = name
 
-def rc4(key, data):
-    """
-    Decrypt/encrypt the passed data using RC4 and the given key.
-    """
-    S,j,out=range(256),0,[]
-    for i in range(256):
-        j=(j+S[i]+ord(key[i%len(key)]))%256
-        S[i],S[j]=S[j],S[i]
-    i=j=0
-    for char in data:
-        i=(i+1)%256
-        j=(j+S[i])%256
-        S[i],S[j]=S[j],S[i]
-        out.append(chr(ord(char)^S[(S[i]+S[j])%256]))
-    return ''.join(out)
 
+def rc4_init(key):
+    """RC4 Key Scheduling Algorithm (KSA)"""
+    global p, q, state
+    state = [n for n in range(256)]
+    p = q = j = 0
+    for i in range(256):
+        if len(key) > 0:
+            j = (j + state[i] + ord(key[i % len(key)])) % 256
+        else:
+            j = (j + state[i]) % 256
+        state[i], state[j] = state[j], state[i]
+def byteGenerator():
+    """RC4 Pseudo-Random Generation Algorithm (PRGA)"""
+    global p, q, state
+    p = (p + 1) % 256
+    q = (q + state[p]) % 256
+    state[p], state[q] = state[q], state[p]
+    return state[(state[p] + state[q]) % 256]
+def rc4_enc(key, inputString):
+    """Encrypt input string returning a byte list"""
+    rc4_init(key)
+    return bytearray([ord(p) ^ byteGenerator() for p in inputString])
+def rc4_dec(key, inputByteList):
+    """Decrypt input byte list returning a string"""
+    print(key, inputByteList)
+    rc4_init(key)
+    p = "".join([chr(c ^ byteGenerator()) for c in bytearray(inputByteList)])
+    print(p)
+    return p
 
 def parse_routing_packet(stagingKey, data):
     """
@@ -69,6 +84,7 @@ def parse_routing_packet(stagingKey, data):
     if data:
         results = {}
         offset = 0
+        data = base64.b64decode(data)
 
         # ensure we have at least the 20 bytes for a routing packet
         if len(data) >= 20:
@@ -80,7 +96,8 @@ def parse_routing_packet(stagingKey, data):
 
                 RC4IV = data[0+offset:4+offset]
                 RC4data = data[4+offset:20+offset]
-                routingPacket = rc4(RC4IV+stagingKey, RC4data)
+                routingPacket = rc4_dec(RC4IV+stagingKey, RC4data)
+                print("InPacket: {}".format(binascii.hexlify(routingPacket)))
                 sessionID = routingPacket[0:8]
 
                 # B == 1 byte unsigned char, H == 2 byte unsigned short, L == 4 byte unsigned long
@@ -140,6 +157,6 @@ def build_routing_packet(stagingKey, sessionID, meta=0, additional=0, encData=''
 
     RC4IV = binascii.hexlify(os.urandom(2))
     key = RC4IV + stagingKey[:28]
-    rc4EncData = rc4(key, data)
+    rc4EncData = rc4_enc(key, data)
     packet = RC4IV + rc4EncData + encData
     return packet
