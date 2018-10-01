@@ -174,8 +174,8 @@ def generate_random_script_var_name(origvariname, globDebug=False):
         return origvariname
     else:
         hash_object = hashlib.sha1(
-            str(origvariname) +
-            str(globentropy)).hexdigest()
+            (str(origvariname) +
+            str(globentropy)).encode('utf-8')).hexdigest()
         return hash_object[:(3 + (globentropy % 3))]
 
 
@@ -236,7 +236,7 @@ def enc_powershell(raw):
     """
     Encode a PowerShell command into a form usable by powershell.exe -enc ...
     """
-    return base64.b64encode("".join([char + "\x00" for char in str(raw)]))
+    return base64.b64encode("".join([char + "\x00" for char in str(raw)]).encode('utf-8')).decode('utf-8')
 
 
 def powershell_launcher(raw, modifiable_launcher):

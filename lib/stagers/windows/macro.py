@@ -101,8 +101,8 @@ class Stager(object):
 
         # generate the launcher code
         launcher = self.mainMenu.stagers.generate_launcher(listenerName, language=language, encode=True, obfuscate=obfuscateScript, obfuscationCommand=obfuscateCommand, userAgent=userAgent, proxy=proxy, proxyCreds=proxyCreds, stagerRetries=stagerRetries)
-        Str = ''.join(random.choice(string.letters) for i in range(random.randint(1,len(listenerName))))
-        Method=''.join(random.choice(string.letters) for i in range(random.randint(1,len(listenerName))))
+        Str = ''.join(random.choice(string.ascii_letters) for i in range(random.randint(1,len(listenerName))))
+        Method=''.join(random.choice(string.ascii_letters) for i in range(random.randint(1,len(listenerName))))
 
         if launcher == "":
             print(helpers.color("[!] Error in launcher command generation."))

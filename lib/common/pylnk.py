@@ -34,7 +34,7 @@ import sys, os, time, re
 from struct import pack, unpack
 from pprint import pformat,PrettyPrinter
 from datetime import datetime
-from io import StringIO
+from io import StringIO, BytesIO
 pp = PrettyPrinter(indent=4)
 
 #---- constants
@@ -198,7 +198,7 @@ def write_cstring(val, buf, padding=False):
 
 def write_cunicode(val, buf):
     uni = val.encode('utf-16-le')
-    buf.write(uni + '\x00\x00')
+    buf.write(uni + b'\x00\x00')
 
 def write_sized_string(val, buf, str=True):
     size = len(val)
@@ -214,7 +214,7 @@ def ret_sized_string(val, str=True):
     if str:
         ret += val.encode('utf-16-le')
     else:
-        ret += val
+        ret += val.encode()
     return ret
 
 def put_bits(bits, target, start, count, length=16):
@@ -426,14 +426,14 @@ class PathSegmentEntry(object):
     
     def bytes(self):
         self._validate()
-        out = StringIO()
+        out = BytesIO()
         entry_type = self.type
         short_name_len = len(self.short_name) + 1
         try:
             self.short_name.decode("ascii")
             short_name_is_unicode = False
             short_name_len += short_name_len % 2 # padding
-        except (UnicodeEncodeError, UnicodeDecodeError):
+        except (UnicodeEncodeError, UnicodeDecodeError, AttributeError):
             short_name_is_unicode = True
             short_name_len = short_name_len * 2
             self.type += " (UNICODE)"
@@ -505,12 +505,15 @@ class LinkTargetIDList(object):
     
     def bytes(self):
         self._validate()
-        out = StringIO()
+        out = BytesIO()
         for item in self.items:
-            bytes = item.bytes
-            write_short(len(bytes) + 2, out) # len + terminator
-            out.write(bytes)
-        out.write('\x00\x00')
+            byt = item.bytes
+            write_short(len(byt) + 2, out) # len + terminator
+            try:
+                out.write(byt.encode('utf-8'))
+            except Exception:
+                out.write(byt)
+        out.write(b'\x00\x00')
         return out.getvalue()
     bytes = property(bytes)
     
@@ -615,8 +618,8 @@ class Lnk(object):
             f.close()
 
     def ret(self):
-        ret  = _SIGNATURE
-        ret += _GUID
+        ret  = _SIGNATURE.encode('utf-8')
+        ret += _GUID.encode('utf-8')
         ret += pack('<I',self.link_flags.bytes)
         ret += pack('<I',self.file_flags.bytes)
         ret += pack('<Q',convert_time_to_windows(self.creation_time))
@@ -627,7 +630,7 @@ class Lnk(object):
         ret += pack('<I',_SHOW_COMMAND_IDS[self._show_command])
         ret += pack('<B',0) #hotkey
         ret += pack('<B',0) #hotkey
-        ret += ('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') # reserved
+        ret += (b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00') # reserved
 
         if self.link_flags.has_shell_item_id_list:
             siil = self.shell_item_id_list.bytes
@@ -647,7 +650,7 @@ class Lnk(object):
         if self.link_flags.has_icon:
             ret += ret_sized_string(self.icon, self.link_flags.is_unicode)
 
-        ret += ('\x00\x00\x00\x00') # header_size
+        ret += (b'\x00\x00\x00\x00') # header_size
         return ret
 
     def write(self, lnk):

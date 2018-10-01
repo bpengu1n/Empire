@@ -215,7 +215,7 @@ class Stagers(object):
 
         if placeHolderSz and offset:
 
-            key = b'subF'
+            key = 'subF'
             launcherCode = ''.join(chr(ord(x) ^ ord(y)) for (x,y) in zip(launcherCode, cycle(key)))
             launcherCode = base64.urlsafe_b64encode(bytes(launcherCode, 'utf8'))
             launcher = launcherCode + b'\x00' * (placeHolderSz - len(launcherCode))
@@ -267,7 +267,7 @@ class Stagers(object):
 
         if placeHolderSz and offset:
 
-            launcher = launcherCode + b'\x00' * (placeHolderSz - len(launcherCode))
+            launcher = launcherCode.encode('utf-8') + b'\x00' * (placeHolderSz - len(launcherCode))
             patchedDylib = template[:offset]+launcher+template[(offset+len(launcher)):]
 
             return patchedDylib
@@ -283,11 +283,10 @@ class Stagers(object):
         MH_EXECUTE = 2
 
         if Arch == 'x64':
-
-            f = open(self.mainMenu.installPath + "/data/misc/apptemplateResources/x64/launcher.app/Contents/MacOS/launcher")
+            f = open(self.mainMenu.installPath + "/data/misc/apptemplateResources/x64/launcher.app/Contents/MacOS/launcher", 'rb')
             directory = self.mainMenu.installPath + "/data/misc/apptemplateResources/x64/launcher.app/"
         else:
-            f = open(self.mainMenu.installPath + "/data/misc/apptemplateResources/x86/launcher.app/Contents/MacOS/launcher")
+            f = open(self.mainMenu.installPath + "/data/misc/apptemplateResources/x86/launcher.app/Contents/MacOS/launcher", 'rb')
             directory = self.mainMenu.installPath + "/data/misc/apptemplateResources/x86/launcher.app/"
 
         macho = macholib.MachO.MachO(f.name)
@@ -314,7 +313,7 @@ class Stagers(object):
 
         if placeHolderSz and offset:
 
-            launcher = launcherCode + b'\x00' * (placeHolderSz - len(launcherCode))
+            launcher = launcherCode.encode('utf-8') + b'\x00' * (placeHolderSz - len(launcherCode))
             patchedBinary = template[:offset]+launcher+template[(offset+len(launcher)):]
             if AppName == "":
                 AppName = "launcher"
