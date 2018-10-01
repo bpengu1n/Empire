@@ -2483,10 +2483,7 @@ class PowerShellAgentMenu(SubMenu):
                 # read in the file and base64 encode it for transport
                 with open(parts[0], 'rb') as open_file:
                     file_data = open_file.read()
-                if isinstance(file_data, bytes):
-                    print("is bytes")
-                else:
-                    print("is not bytes")
+                    
                 size = os.path.getsize(parts[0])
                 if size > 1048576:
                     print(
